@@ -80,6 +80,9 @@ body.screen-play #dim { opacity: 1; }
 .hp-bar .seg.lost { background: rgba(255,79,109,.7); }
 .hp-bar.hit { --bc: #ff4f6d; }
 .hp-bar.heal { --bc: #46f0a0; }
+/* 체력이 깎일 때: 상단 라인·하단 라인·HP바 테두리가 빨강 (Figma 05 화면) */
+body.fx-damage .band-top { border-bottom-color: #ff4f6d; }
+body.fx-damage .band-bottom { border-top-color: #ff4f6d; }
 
 /* ===== 아이템 카드 (도감/알림 공용) ===== */
 .card { display: flex; --u: 4px; height: 96px; flex: none; }
@@ -98,7 +101,7 @@ body.screen-play #dim { opacity: 1; }
 .card .desc { font-size: 12px; line-height: 1.5; color: #455a64; }
 .card.locked .desc { color: #a99cf0; }
 
-.toast { position: fixed; z-index: 80; display: none; }
+.toast { position: fixed; z-index: 80; display: none; cursor: pointer; }
 .toast.show { display: block; }
 .toast .card { width: 100%; }
 

@@ -129,6 +129,7 @@
 
   const IS_TOUCH = (window.matchMedia && matchMedia('(pointer: coarse)').matches) || 'ontouchstart' in window;
   const START_HINT_TEXT = IS_TOUCH ? '화면을 터치하면 게임 시작!' : '화면을 클릭하면 게임 시작!';
+  const RESUME_HINT_TEXT = IS_TOUCH ? '화면을 터치하면 이어서 진행!' : '화면을 클릭하면 이어서 진행!';
 
   class ItemManager {
     rollDropItem() {
@@ -302,6 +303,7 @@
       this.floatingTexts = [];
       this.dropCooldown = 0;
       this.isStageClearing = false;
+      this.giftPause = false;
 
       this.resizeCanvas();
       this.initStage(this.stage);
@@ -315,8 +317,23 @@
 
     stop() {
       this.isPlaying = false;
+      this.giftPause = false;
       if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
+    }
+
+    // 선물을 받으면 잠시 멈춰서 어떤 선물인지 읽을 수 있게 하고, 클릭/터치하면 이어서 진행
+    pauseForGift() {
+      this.giftPause = true;
+      this.isPaused = true;
+    }
+
+    resumeFromGift() {
+      if (!this.giftPause) return false;
+      this.giftPause = false;
+      this.isPaused = false;
+      this.lastTime = performance.now();
+      return true;
     }
 
     // 스테이지별 차이는 벽돌 개수뿐: 1단계 4줄(28개)부터 1줄(7개)씩 늘어 3단계 6줄(42개), 모든 벽돌 1번에 깨짐
@@ -615,25 +632,22 @@
       this.renderParticles(ctx);
       ctx.restore();
 
-      if (dmg > 0) {
-        const g = ctx.createRadialGradient(this.width / 2, this.height / 2, this.height * 0.25, this.width / 2, this.height / 2, this.height * 0.75);
-        g.addColorStop(0, 'rgba(255, 79, 109, 0)');
-        g.addColorStop(1, `rgba(255, 79, 109, ${0.6 * dmg})`);
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, this.width, this.height);
-      }
       this.renderFloatingTexts(ctx);
 
-      if (this.ballAttached && this.isPlaying && !this.isGameOver && !this.isStageClearing && !this.isPaused) {
+      const showStartHint = this.ballAttached && this.isPlaying && !this.isGameOver && !this.isStageClearing && !this.isPaused;
+      const showGiftHint = this.giftPause && this.isPlaying && !this.isGameOver;
+      if (showStartHint || showGiftHint) {
+        const text = showGiftHint ? RESUME_HINT_TEXT : START_HINT_TEXT;
+        const y = showGiftHint ? this.height * 0.72 : this.height / 2;
         ctx.save();
         ctx.font = 'bold 22px Mona12, Pretendard, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.lineWidth = 4;
         ctx.strokeStyle = 'rgba(10,5,54,.8)';
-        ctx.strokeText(START_HINT_TEXT, this.width / 2, this.height / 2);
+        ctx.strokeText(text, this.width / 2, y);
         ctx.fillStyle = '#ffd23f';
-        ctx.fillText(START_HINT_TEXT, this.width / 2, this.height / 2);
+        ctx.fillText(text, this.width / 2, y);
         ctx.restore();
       }
     }
@@ -708,21 +722,25 @@
     ctx.imageSmoothingEnabled = false;
 
     const cx = w / 2;
-    const padY = h - 80;                // 패들 y
-    const wallTop = padY - 203;
-    const PAL = ['#ff4fb0', '#ffc83d', '#27d3ff', '#a066ff'];
-    for (let r = 0; r < 9; r++) for (let col = 0; col < 7; col++) {
-      drawBrick(ctx, cx - 207 + col * 60, wallTop + r * 28, 56, 24, PAL[(col + r * 2) % 4]);
-    }
-    // 공 + 꼬리
-    drawBall(ctx, { x: cx + 62, y: wallTop + 23, vx: 180, vy: -260 });
+    const left = cx - 195;              // 390 콘텐츠 영역의 왼쪽 끝
+    const wallTop = h - 301;            // Figma 기준 y=496 (높이 797)
+    // 벽돌 배치: Figma 시작 화면(01)에서 좌표를 그대로 옮김 [x, y, 색] (좌우는 화면 밖으로 잘림)
+    const P = '#ff4fb0', Y = '#ffc83d', C = '#27d3ff', V = '#a066ff';
+    const WALL = [
+      [-12, 496, P], [48, 496, Y], [108, 496, C], [168, 496, V], [228, 496, P], [288, 496, Y], [348, 496, C],
+      [-12, 524, C], [48, 524, V], [168, 524, Y], [228, 524, C], [288, 524, V], [348, 524, P],
+      [-12, 552, P], [48, 552, Y], [288, 552, Y], [348, 552, C],
+      [-12, 580, C], [48, 580, V], [348, 580, P],
+      [-12, 608, P], [348, 608, C],
+      [-12, 636, C]
+    ];
+    for (const [x, y, color] of WALL) drawBrick(ctx, left + x, wallTop + (y - 496), 56, 24, color);
     // 파티클
-    for (const [x, dy, s, color] of [[110, 20, 8, '#27d3ff'], [130, 56, 6, '#ff4fd8'], [286, 14, 8, '#ff9be8'], [272, 70, 6, '#27d3ff'], [92, 96, 6, '#a066ff'], [300, 120, 6, '#ffd23f']]) {
-      ctx.fillStyle = color; ctx.fillRect(Math.round(cx - 195 + x), Math.round(wallTop + dy), s, s);
+    for (const [x, y, s, color] of [[110, 534, 8, '#27d3ff'], [130, 570, 6, '#ff4fd8'], [286, 528, 8, '#ff9be8'], [272, 584, 6, '#27d3ff'], [92, 610, 6, '#a066ff'], [300, 634, 6, '#ffd23f']]) {
+      ctx.fillStyle = color; ctx.fillRect(Math.round(left + x), Math.round(wallTop + (y - 496)), s, s);
     }
-    // 덕헤이 (3배 확대) + 패들
-    ctx.drawImage(SPRITES.duckCanvas, Math.round(cx - 76), Math.round(padY - 195), 153, 195);
-    drawPaddle(ctx, cx - 96, padY, 192);
+    // 덕헤이 (3배 확대) — 벽돌 앞에 앉아 있음
+    ctx.drawImage(SPRITES.duckCanvas, Math.round(cx - 76), Math.round(wallTop + 28), 153, 195);
   }
 
   // ==========================================
@@ -745,7 +763,7 @@
     const hudStage = $('hud-stage'), hudBricks = $('hud-bricks');
     const hpBar = $('hp-bar'), hpText = $('hp-text');
     const toast = $('toast'), board = $('board'), canvas = $('game-canvas');
-    let toastTimeout = null, lastOn = 10, hpTimer = null;
+    let lastOn = 10, hpTimer = null;
 
     const escapeHtml = (s) => String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 
@@ -838,8 +856,14 @@
         game.addFloatingText(`아이템 ${PRIZE_CONFIG.requiredCoupons}개 달성! 경품 응모 가능`, game.width / 2, game.height / 2 - 30, '#ffd700', 16);
       }
       toast.classList.add('show');
-      if (toastTimeout) clearTimeout(toastTimeout);
-      toastTimeout = setTimeout(() => toast.classList.remove('show'), 2800);
+      game.pauseForGift();           // 어떤 선물인지 읽을 수 있게 잠시 멈춤 → 클릭/터치하면 이어서 진행
+    }
+
+    // 선물 안내를 닫고 게임 이어서 진행
+    function resumeFromGift() {
+      if (!game.resumeFromGift()) return false;
+      toast.classList.remove('show');
+      return true;
     }
 
     function handleStateChange(state) {
@@ -848,11 +872,18 @@
       const prevOn = lastOn;
       lastOn = renderHp(state.hp, state.hpDelta < 0 ? prevOn : null);
       if (state.hpDelta) {
+        // 체력이 깎이면 빨강(HP바 + 상단/하단 라인), 채워지면 초록(HP바 테두리) — Figma 디자인과 동일
         const isHit = state.hpDelta < 0;
         hpBar.classList.remove('hit', 'heal');
+        document.body.classList.remove('fx-damage');
         hpBar.classList.add(isHit ? 'hit' : 'heal');
+        if (isHit) document.body.classList.add('fx-damage');
         if (hpTimer) clearTimeout(hpTimer);
-        hpTimer = setTimeout(() => { hpBar.classList.remove('hit', 'heal'); renderHp(game.hp); }, 500);
+        hpTimer = setTimeout(() => {
+          hpBar.classList.remove('hit', 'heal');
+          document.body.classList.remove('fx-damage');
+          renderHp(game.hp);
+        }, 700);
         game.lastHpDelta = 0;
       }
       if (state.isGameOver) {
@@ -874,6 +905,7 @@
       audio.stopBgm();
       $('bgm-icon').src = SPRITES.noteOnURL;
       toast.classList.remove('show');
+      document.body.classList.remove('fx-damage');
       ['modal-gameover', 'modal-wallet', 'modal-prize'].forEach(id => $(id).classList.remove('active'));
       document.body.classList.add('screen-start');
       document.body.classList.remove('screen-play');
@@ -904,9 +936,11 @@
       e.preventDefault();
       audio.init();
       $('modal-gameover').classList.remove('active');
+      toast.classList.remove('show');
       renderHp(HP_MAX); lastOn = 10;
       game.start();
     });
+    toast.addEventListener('click', resumeFromGift);   // 선물 카드를 눌러도 이어서 진행
     $('btn-close').addEventListener('click', showStart);   // 닫기 → 시작 화면으로
     $('btn-bgm').addEventListener('click', () => {
       $('bgm-icon').src = audio.toggleBgm() ? SPRITES.noteOnURL : SPRITES.noteOffURL;
@@ -917,6 +951,7 @@
     canvas.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
       audio.init();
+      if (resumeFromGift()) return;       // 선물 안내 중이면 클릭으로 이어서 진행
       if (!mouseControlOn) {
         mouseControlOn = true;
         const rect = canvas.getBoundingClientRect();
@@ -947,6 +982,7 @@
       e.preventDefault();
       const t = e.changedTouches[0];
       const isTap = Math.abs(t.clientX - touchStartX) < TAP_MAX_MOVE && performance.now() - touchStartTime < TAP_MAX_MS;
+      if (isTap && resumeFromGift()) return;   // 선물 안내 중이면 터치로 이어서 진행
       if (isTap) game.launchBall();
     }, { passive: false });
 
@@ -956,7 +992,7 @@
       audio.init();
       if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') game.movePaddleLeft(true);
       if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') game.movePaddleRight(true);
-      if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') game.launchBall();
+      if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { if (!resumeFromGift()) game.launchBall(); }
       if (e.key === 'm' || e.key === 'M') $('bgm-icon').src = audio.toggleBgm() ? SPRITES.noteOnURL : SPRITES.noteOffURL;
     });
     window.addEventListener('keyup', (e) => {
