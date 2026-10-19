@@ -54,7 +54,7 @@ body.screen-play #dim { opacity: 1; }
 .band-top { height: 60px; border-bottom: 4px solid var(--gray-line); }
 .band-bottom { border-top: 4px solid var(--cyan); padding: 12px 12px calc(16px + env(safe-area-inset-bottom)); }
 .header-row { height: 100%; display: flex; align-items: center; gap: 8px; padding: 8px 12px; }
-.duck-head { width: 34px; height: 44px; flex: none; }
+.px-img.duck-head { width: 34px; height: 44px; flex: none; image-rendering: auto; }
 .titles { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .t-main { font-size: 16px; font-weight: 700; line-height: 1.4; text-shadow: 0 2px 0 #d946ef; white-space: nowrap; }
 .t-sub { font-size: 12px; font-weight: 700; color: #ffe066; line-height: 1.6; white-space: nowrap; }

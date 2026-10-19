@@ -752,7 +752,7 @@
       ctx.fillStyle = color; ctx.fillRect(Math.round(left + x), Math.round(wallTop + (y - 496)), s, s);
     }
     // 덕헤이 (3배 확대) — 벽돌 앞에 앉아 있음
-    ctx.drawImage(SPRITES.duckCanvas, Math.round(cx - 76), Math.round(wallTop + 28), 153, 195);
+    SPRITES.drawDuck(ctx, Math.round(cx - 77), Math.round(wallTop + 26), 0.75);   // 204×260 → 153×195
   }
 
   // ==========================================
