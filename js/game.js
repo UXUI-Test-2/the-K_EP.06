@@ -129,7 +129,8 @@
 
   const IS_TOUCH = (window.matchMedia && matchMedia('(pointer: coarse)').matches) || 'ontouchstart' in window;
   const START_HINT_TEXT = IS_TOUCH ? '화면을 터치하면 게임 시작!' : '화면을 클릭하면 게임 시작!';
-  const RESUME_HINT_TEXT = IS_TOUCH ? '화면을 터치하면 이어서 진행!' : '화면을 클릭하면 이어서 진행!';
+  const AUTO_RELAUNCH_SEC = 1.0;      // 공을 놓친 뒤 자동 발사까지 대기 시간
+  const RESUME_HINT_TEXT =IS_TOUCH ? '화면을 터치하면 이어서 진행!' : '화면을 클릭하면 이어서 진행!';
 
   class ItemManager {
     rollDropItem() {
@@ -304,6 +305,7 @@
       this.dropCooldown = 0;
       this.isStageClearing = false;
       this.giftPause = false;
+      this.autoLaunch = 0;
 
       this.resizeCanvas();
       this.initStage(this.stage);
@@ -404,6 +406,12 @@
       }
 
       if (!this.ballAttached && !this.isStageClearing) this.updateBalls(deltaSec);
+
+      // 공을 놓친 뒤: 잠시 대기 후 자동 발사 (게임이 멈춰 있지 않도록)
+      if (this.autoLaunch > 0 && this.ballAttached && !this.isStageClearing) {
+        this.autoLaunch -= deltaSec;
+        if (this.autoLaunch <= 0) { this.autoLaunch = 0; this.launchBall(); }
+      }
 
       if (this.dropCooldown > 0) this.dropCooldown = Math.max(0, this.dropCooldown - deltaSec);
       for (let i = this.fallingItems.length - 1; i >= 0; i--) {
@@ -557,7 +565,10 @@
     loseLife() {
       audio.playLoseLife();
       this.takeDamage(HP_BALL_LOST_DAMAGE, this.paddle.x + this.paddle.width / 2, this.height - 10);
-      if (!this.isGameOver) this.resetBallAndPaddle();
+      if (!this.isGameOver) {
+        this.resetBallAndPaddle();
+        this.autoLaunch = AUTO_RELAUNCH_SEC;   // 체력이 깎여도 멈추지 않고 잠시 뒤 공이 자동 발사됨
+      }
     }
 
     stageClear() {
@@ -634,10 +645,11 @@
 
       this.renderFloatingTexts(ctx);
 
-      const showStartHint = this.ballAttached && this.isPlaying && !this.isGameOver && !this.isStageClearing && !this.isPaused;
+      const showReady = this.autoLaunch > 0 && this.ballAttached && this.isPlaying && !this.isGameOver && !this.isPaused;
+      const showStartHint = !showReady && this.ballAttached && this.isPlaying && !this.isGameOver && !this.isStageClearing && !this.isPaused;
       const showGiftHint = this.giftPause && this.isPlaying && !this.isGameOver;
-      if (showStartHint || showGiftHint) {
-        const text = showGiftHint ? RESUME_HINT_TEXT : START_HINT_TEXT;
+      if (showStartHint || showGiftHint || showReady) {
+        const text = showGiftHint ? RESUME_HINT_TEXT : showReady ? 'READY!' : START_HINT_TEXT;
         const y = showGiftHint ? this.height * 0.72 : this.height / 2;
         ctx.save();
         ctx.font = 'bold 22px Mona12, Pretendard, sans-serif';
