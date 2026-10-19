@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0536">
+  <title>더케이 오락실 레트로 벽돌깨기</title>
+  <meta name="description" content="The-K 더케이 오락실 — 8비트 레트로 벽돌깨기 게임">
+  <link rel="icon" href="assets/favicon.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="screen-start">
+  <div id="bg" aria-hidden="true"></div>
+  <div id="dim" aria-hidden="true"></div>
+
+  <!-- 게임 화면 -->
+  <div id="app">
+    <header class="band band-top">
+      <div class="col header-row">
+        <img id="duck-head" class="px-img duck-head" alt="덕헤이">
+        <div class="titles">
+          <span class="t-main">더케이 오락실</span>
+          <span class="t-sub">레트로 벽돌깨기</span>
+        </div>
+        <button id="btn-bgm" class="icon-btn pxbox" style="--bc:#27d3ff;--bg:#1b0d58;--u:2px" aria-label="BGM 온/오프"><img id="bgm-icon" class="px-img" width="24" height="20" alt=""></button>
+        <button id="btn-close" class="icon-btn pxbox" style="--bc:#8581b3;--bg:#1b0d58;--u:2px" aria-label="게임 닫기"><img id="close-icon" class="px-img" width="20" height="20" alt=""></button>
+      </div>
+    </header>
+
+    <main class="col play">
+      <section id="hud" class="pxbox hud" style="--bc:#8581b3;--bg:rgba(18,6,63,.92)">
+        <div class="hud-item"><span class="lbl">STAGE</span><span id="hud-stage" class="val">1</span></div>
+        <div class="hud-item"><span class="lbl">BRICKS</span><span id="hud-bricks" class="val">0</span></div>
+        <span class="grow"></span>
+        <button id="btn-wallet" class="btn pxbox btn-gold" style="--bc:#8581b3;--bg:#ffd700;--u:4px"><span id="wallet-label">아이템 도감</span></button>
+      </section>
+      <div id="board"><canvas id="game-canvas"></canvas></div>
+    </main>
+
+    <footer class="band band-bottom">
+      <div class="col hp-box">
+        <div class="hp-row"><span class="lbl2">HP</span><span id="hp-text" class="hp-text">100 / 100</span></div>
+        <div id="hp-bar" class="pxbox hp-bar" style="--bc:#7a4dff;--bg:#12063f;--u:4px" role="progressbar" aria-label="생명력" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"></div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- 도감 등록 알림 (선물 획득) -->
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <!-- 시작 화면 (튜토리얼) -->
+  <div id="start" class="start">
+    <div class="start-inner">
+      <canvas id="start-canvas"></canvas>
+      <div class="col start-col">
+        <img id="gamepad" class="px-img" width="48" height="24" alt="">
+        <h1 class="logo"><span class="logo-1">더케이</span><span class="logo-2">오락실</span></h1>
+        <div class="chip pxbox" style="--bc:#8581b3;--bg:#12063f;--u:4px"><span>레트로 벽돌깨기 게임</span></div>
+        <section class="info pxbox" style="--bc:#27d3ff;--bg:rgba(18,6,63,.92);--u:4px">
+          <p class="info-desc">아래 바를 한번 누르고 원하는 방향으로 움직이면서 벽돌을 깰 수 있어요. 떨어지는 아이템을 놓치지마세요 !</p>
+          <p class="tip-title"># 게임 TIP</p>
+          <p>경품 받기 : 아이템을 3개 획득하면 경품을 받을 수 있어요.</p>
+          <p>HP 지키기 : 폭탄을 피하지 못하거나 공을 놓치면 HP가 줄어들어요. HP가 모두 줄어들면 게임 오버 !</p>
+        </section>
+        <div class="btnwrap block"><button id="btn-start" class="btn pxbox btn-primary cta" style="--bc:#8581b3;--bg:#ffd23f;--u:4px"><img id="play-icon" class="px-img" width="12" height="21" alt=""><span>시작하기</span></button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 게임 종료 팝업 -->
+  <div id="modal-gameover" class="overlay">
+    <div class="modal pxbox" style="--bc:#8581b3;--bg:#150a4a;--u:4px">
+      <div class="m-head"><span id="gameover-title" class="m-title">GAME OVER</span></div>
+      <div class="m-body">
+        <div class="stats">
+          <div class="stat pxbox" style="--bc:#ffd700;--bg:#10073a"><span class="stat-l">도달 스테이지</span><span id="final-stage" class="stat-n">1</span></div>
+          <div class="stat pxbox" style="--bc:#ffd700;--bg:#10073a"><span class="stat-l">획득 아이템</span><span id="final-coupons" class="stat-n">0</span></div>
+        </div>
+        <div id="gameover-prize" class="banner pxbox" style="--bc:#27d3ff;--bg:#2a0f7a"></div>
+      </div>
+      <div class="m-foot">
+        <button id="btn-go-wallet" class="btn pxbox btn-secondary" style="--bc:#27d3ff;--bg:#241166;--u:4px">아이템 도감</button>
+        <div class="btnwrap grow"><button id="btn-restart" class="btn pxbox btn-primary" style="--bc:#f5a31a;--bg:#ffd23f;--u:4px">다시 도전하기</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 아이템 도감 팝업 -->
+  <div id="modal-wallet" class="overlay">
+    <div class="modal pxbox" style="--bc:#8581b3;--bg:#150a4a;--u:4px">
+      <div class="m-head"><span class="m-title">나의 아이템 도감</span><button id="btn-wallet-x" class="icon-btn plain" aria-label="닫기"><img class="px-img x-icon" width="20" height="20" alt=""></button></div>
+      <div class="m-body dex-body">
+        <div id="wallet-prize" class="banner pxbox" style="--bc:#27d3ff;--bg:#2a0f7a"></div>
+        <div id="wallet-summary" class="dex-summary"></div>
+        <div id="wallet-list" class="dex-list"></div>
+      </div>
+      <div class="m-foot">
+        <button id="btn-wallet-resume" class="btn pxbox btn-secondary" style="--bc:#27d3ff;--bg:#241166;--u:4px">계속하기</button>
+        <div class="btnwrap grow"><button id="btn-prize-apply" class="btn pxbox btn-primary" style="--bc:#f5a31a;--bg:#ffd23f;--u:4px">본인인증 후 경품 받기</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 경품 응모 (본인인증 안내) 팝업 -->
+  <div id="modal-prize" class="overlay">
+    <div class="modal pxbox" style="--bc:#8581b3;--bg:#150a4a;--u:4px">
+      <div class="m-head"><span class="m-title">경품 응모</span><button id="btn-prize-x" class="icon-btn plain" aria-label="닫기"><img class="px-img x-icon" width="20" height="20" alt=""></button></div>
+      <div class="m-body center">
+        <h3 class="prize-h">아이템 <span id="prize-count">3</span>개 수집 완료!</h3>
+        <p id="prize-message" class="prize-msg"></p>
+      </div>
+      <div class="m-foot">
+        <button id="btn-prize-cancel" class="btn pxbox btn-secondary" style="--bc:#27d3ff;--bg:#241166;--u:4px">나중에</button>
+        <div class="btnwrap grow"><button id="btn-prize-auth" class="btn pxbox btn-primary" style="--bc:#f5a31a;--bg:#ffd23f;--u:4px">본인인증 하기</button></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/sprites.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
