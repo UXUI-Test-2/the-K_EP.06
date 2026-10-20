@@ -172,4 +172,28 @@ body:not(.screen-start) .start { display: none; }
   .cta { height: 44px; }
 }
 
+
+/* ===== 경품 응모 완료 / 이벤트 중복 참여 방지 페이지 ===== */
+.result { position: fixed; inset: 0; z-index: 110; display: none; overflow: hidden; background: #0a0536 url('../assets/bg-neon-city.png') center bottom / cover no-repeat; image-rendering: pixelated; }
+body.screen-result .result { display: block; }
+.result-inner { position: relative; height: 100%; }
+.result-art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+.result-col { position: relative; height: 100%; padding: 24px 24px 28px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 16px; text-align: center; }
+.result-title { font-size: 36px; line-height: 1.25; font-weight: 700; letter-spacing: -0.04em; -webkit-text-stroke: 4px #27d3ff; paint-order: stroke fill; color: #fff; text-shadow: 0 4px 0 #1b3cff; margin-top: var(--hero-gap, 150px); }
+.result[data-kind="duplicate"] .result-title { color: #ff63e6; text-shadow: 0 4px 0 #7a1458; }
+.result-body { width: 100%; padding: 14px 12px; font-size: 14px; line-height: 1.7; color: var(--white); }
+.result-body .dim { color: var(--lav); }
+.result-btns { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+.result-btns > .btn { width: 100%; height: 52px; font-size: 16px; }
+.result-back { margin-top: 12px; }
+.result-back .btn { height: 52px; font-size: 18px; }
+
+.notice { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 200; display: none; padding: 10px 16px; background: var(--panel-dark); border: 4px solid var(--gray-line); color: var(--white); font-size: 14px; line-height: 1.4; max-width: calc(100vw - 32px); text-align: center; }
+.notice.show { display: block; }
+
+/* 기기 높이가 낮을수록 일러스트 영역과 간격을 압축 */
+@media (max-height: 820px) { .result-title { --hero-gap: 130px; font-size: 34px; } }
+@media (max-height: 740px) { .result-title { --hero-gap: 100px; font-size: 30px; -webkit-text-stroke-width: 3px; } .result-col { gap: 12px; padding-top: 16px; } .result-body { font-size: 13px; line-height: 1.6; padding: 10px; } .result-btns > .btn, .result-back .btn { height: 46px; } }
+@media (max-height: 660px) { .result-title { --hero-gap: 70px; font-size: 26px; } .result-col { gap: 10px; } .result-btns { gap: 8px; } .result-back { margin-top: 4px; } .result-btns > .btn, .result-back .btn { height: 42px; font-size: 14px; } }
+
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

@@ -155,8 +155,11 @@
   const PRIZE_CONFIG = {
     requiredCoupons: 3,
     prizeName: '경품',     // 확정 시 교체 (예: '커피 쿠폰')
-    authUrl: ''            // 본인인증 페이지 URL — 비어 있으면 '연동 준비 중' 안내 표시
+    authUrl: '',           // 본인인증 페이지 URL — 비어 있으면 데모 모드(바로 응모 결과 화면으로 이동)
+    savingUrl: '',         // 응모 결과 화면의 「장기저축급여 알아보기」 연결 주소 (콘텐츠 전용관 장기저축급여 편)
+    welfareUrl: ''         // 「공제회 회원 전용 혜택 모아보기」 연결 주소 (콘텐츠 전용관 복지혜택 편)
   };
+  const PRIZE_APPLIED_KEY = 'KTCU_BREAKER_PRIZE_APPLIED_V1';   // 경품 응모 여부 (중복 참여 방지)
 
   class CouponWallet {
     constructor() {
@@ -862,10 +865,10 @@
       $('prize-count').textContent = couponWallet.count;
       $('prize-message').innerHTML = PRIZE_CONFIG.authUrl
         ? `경품 지급을 위해 <b>본인인증</b>이 필요해요.<br>인증을 마치면 <b>${prize}</b> 응모가 완료됩니다.`
-        : '본인인증 연동을 준비하고 있어요.<br>조금만 기다려 주세요! 모은 아이템은 도감에 그대로 보관됩니다.';
+        : `경품 지급을 위해 <b>본인인증</b>이 필요해요.<br>(데모) 버튼을 누르면 본인인증을 마친 것으로 보고<br><b>${prize}</b> 응모 결과 화면으로 이동해요.`;
       const btnAuth = $('btn-prize-auth');
-      btnAuth.disabled = !PRIZE_CONFIG.authUrl;
-      btnAuth.textContent = PRIZE_CONFIG.authUrl ? '본인인증 하기' : '준비 중';
+      btnAuth.disabled = false;
+      btnAuth.textContent = '본인인증 하기';
       $('modal-wallet').classList.remove('active');
       $('modal-prize').classList.add('active');
     }
@@ -927,6 +930,68 @@
     const game = new BrickBreakerGame(canvas, itemManager, couponWallet, handleStateChange, showItemToast);
     updateWalletButton();
 
+    // ----- 경품 응모 완료 / 이벤트 중복 참여 방지 페이지 -----
+    let noticeTimer = null;
+    function notify(msg) {
+      const n = $('notice');
+      n.textContent = msg; n.classList.add('show');
+      if (noticeTimer) clearTimeout(noticeTimer);
+      noticeTimer = setTimeout(() => n.classList.remove('show'), 2200);
+    }
+    function applyPrize() {
+      let already = false;
+      try { already = localStorage.getItem(PRIZE_APPLIED_KEY) === '1'; if (!already) localStorage.setItem(PRIZE_APPLIED_KEY, '1'); } catch (e) {}
+      closePrize();
+      showResult(already ? 'duplicate' : 'complete');
+    }
+    function drawResultArt(kind) {
+      const c = $('result-art'), inner = c.parentElement;
+      const w = inner.clientWidth, h = inner.clientHeight;
+      if (!w || !h) return;
+      const dpr = window.devicePixelRatio || 1;
+      c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+      const ctx = c.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+      ctx.imageSmoothingEnabled = false;
+      // 제목 위의 남은 공간에 덕헤이를 앉힘 (공간이 좁으면 생략)
+      const space = $('result-title').getBoundingClientRect().top - inner.getBoundingClientRect().top - 12;
+      if (space < 90) return;
+      const s = space >= 130 ? 0.5 : space / 260;            // 204×260 기준 배율
+      const dw = 204 * s, dh = 260 * s, cx = w / 2, top = space - dh + 12 - 12 + 0;
+      SPRITES.drawDuck(ctx, Math.round(cx - dw / 2), Math.round(Math.max(8, top)), s);
+      const ay = Math.round(Math.max(8, top));
+      if (kind === 'complete') {
+        // 선물 + 색종이
+        ctx.drawImage(SPRITES.giftCanvas, Math.round(cx + dw / 2 - 6), ay + 8, 48, 48);
+        const CONF = [[-110, 10, 8, '#27d3ff'], [-86, 56, 6, '#ff4fd8'], [-130, 70, 6, '#ffd23f'], [-60, 6, 6, '#a066ff'], [118, 70, 8, '#ff9be8'], [96, 6, 6, '#27d3ff'], [140, 28, 6, '#ffd23f'], [-100, 100, 8, '#ff9be8'], [88, 104, 6, '#a066ff']];
+        for (const [x, y, sz, col] of CONF) { ctx.fillStyle = col; ctx.fillRect(Math.round(cx + x), ay + y, sz, sz); }
+      } else {
+        // 응모 완료 배지(체크)
+        const bx = Math.round(cx + dw / 2 + 18), by = ay + 32;
+        const OUTER = [4, 8, 10, 10, 12, 12, 12, 12, 10, 10, 8, 4], INNER = [4, 8, 8, 10, 10, 10, 10, 8, 8, 4];
+        discRows(ctx, bx, by, OUTER, 4, '#46f0a0');
+        discRows(ctx, bx, by, INNER, 4, '#003c1e');
+        ctx.fillStyle = '#ffffff';
+        for (const [x, y] of [[0, 2], [1, 3], [2, 4], [3, 3], [4, 2], [5, 1], [6, 0]]) ctx.fillRect(bx - 14 + x * 4, by - 10 + y * 4, 4, 4);
+      }
+    }
+    function showResult(kind) {
+      game.stop(); audio.stopBgm();
+      $('bgm-icon').src = SPRITES.noteOnURL;
+      toast.classList.remove('show');
+      document.body.classList.remove('fx-damage', 'screen-play', 'screen-start');
+      ['modal-gameover', 'modal-wallet', 'modal-prize'].forEach(id => $(id).classList.remove('active'));
+      document.body.classList.add('screen-result');
+      $('result').dataset.kind = kind;
+      $('result-title').innerHTML = kind === 'duplicate' ? '이미 경품 응모가<br>완료되었습니다.' : '경품 응모가<br>완료되었습니다.';
+      drawResultArt(kind);
+    }
+    function openLink(url) { if (url) window.open(url, '_blank', 'noopener'); else notify('연결 페이지를 준비하고 있어요.'); }
+    $('btn-link-saving').addEventListener('click', () => openLink(PRIZE_CONFIG.savingUrl));
+    $('btn-link-welfare').addEventListener('click', () => openLink(PRIZE_CONFIG.welfareUrl));
+    $('btn-result-back').addEventListener('click', () => showStart());   // 게임으로 돌아가기
+
     // ----- 화면 전환 -----
     function showStart() {
       game.stop();
@@ -936,7 +1001,7 @@
       document.body.classList.remove('fx-damage');
       ['modal-gameover', 'modal-wallet', 'modal-prize'].forEach(id => $(id).classList.remove('active'));
       document.body.classList.add('screen-start');
-      document.body.classList.remove('screen-play');
+      document.body.classList.remove('screen-play', 'screen-result');
       drawStartArt();
     }
     function beginGame() {
@@ -957,8 +1022,13 @@
     $('btn-prize-x').addEventListener('click', closePrize);
     $('btn-prize-cancel').addEventListener('click', closePrize);
     $('btn-prize-auth').addEventListener('click', () => {
-      if (!PRIZE_CONFIG.authUrl) return;
-      window.open(PRIZE_CONFIG.authUrl, '_blank', 'noopener');   // 게임은 개인정보를 받지 않음
+      if (PRIZE_CONFIG.authUrl) {
+        // 실제 연동: 본인인증은 외부 페이지에서 처리하고(게임은 개인정보를 받지 않음),
+        // 인증 후 ?page=complete(최초 응모) / ?page=duplicate(이미 응모)로 돌아오게 한다.
+        window.open(PRIZE_CONFIG.authUrl, '_blank', 'noopener');
+        return;
+      }
+      applyPrize();   // 데모: 인증 완료로 간주
     });
     $('btn-restart').addEventListener('click', (e) => {
       e.preventDefault();
@@ -1028,11 +1098,19 @@
       if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') game.movePaddleRight(false);
     });
 
-    window.addEventListener('resize', () => { game.resizeCanvas(); if (document.body.classList.contains('screen-start')) drawStartArt(); });
+    window.addEventListener('resize', () => {
+      game.resizeCanvas();
+      if (document.body.classList.contains('screen-start')) drawStartArt();
+      if (document.body.classList.contains('screen-result')) drawResultArt($('result').dataset.kind);
+    });
+
+    // 외부(본인인증 페이지 등)에서 결과 화면으로 바로 들어오는 경우: ?page=complete | ?page=duplicate
+    const entry = new URLSearchParams(location.search).get('page');
+    if (entry === 'complete' || entry === 'duplicate') showResult(entry);
 
     // 폰트 로드 후 시작 화면 일러스트 그리기
     drawStartArt();
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawStartArt);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { drawStartArt(); if (document.body.classList.contains('screen-result')) drawResultArt($('result').dataset.kind); });
     if (window.ResizeObserver) new ResizeObserver(() => { if (document.body.classList.contains('screen-start')) drawStartArt(); }).observe(document.querySelector('.start-col'));
   });
 })();
