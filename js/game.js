@@ -733,9 +733,19 @@
     ctx.clearRect(0, 0, w, h);
     ctx.imageSmoothingEnabled = false;
 
-    const cx = w / 2;
-    const left = cx - 195;              // 390 콘텐츠 영역의 왼쪽 끝
-    const wallTop = h - 301;            // Figma 기준 y=496 (높이 797)
+    // 일러스트(벽돌 벽 + 덕헤이)는 "시작하기" 버튼 아래 남은 공간에 맞춰 배치.
+    // 공간이 넉넉하면 원래 크기(1배)로 가운데 쯤에, 모자라면 최대 0.7배까지 줄여서 화면 안에 들어오게 한다.
+    const ART_H = 221, GAP_TOP = 22, GAP_BOTTOM = 20;
+    const ctaBottom = document.getElementById('btn-start').getBoundingClientRect().bottom - inner.getBoundingClientRect().top;
+    const avail = h - (ctaBottom + GAP_TOP) - GAP_BOTTOM;
+    const f = Math.max(0.7, Math.min(1, avail / ART_H));
+    const extra = Math.max(0, avail - ART_H * f);
+    const top = ctaBottom + GAP_TOP + extra * 0.45;
+
+    ctx.save();
+    ctx.translate(w / 2, top);
+    ctx.scale(f, f);
+    const left = -195;                  // 390 콘텐츠 영역의 왼쪽 끝 (가운데 기준)
     // 벽돌 배치: Figma 시작 화면(01)에서 좌표를 그대로 옮김 [x, y, 색] (좌우는 화면 밖으로 잘림)
     const P = '#ff4fb0', Y = '#ffc83d', C = '#27d3ff', V = '#a066ff';
     const WALL = [
@@ -746,13 +756,19 @@
       [-12, 608, P], [348, 608, C],
       [-12, 636, C]
     ];
-    for (const [x, y, color] of WALL) drawBrick(ctx, left + x, wallTop + (y - 496), 56, 24, color);
+    for (const [x, y, color] of WALL) {
+      drawBrick(ctx, left + x, y - 496, 56, 24, color);
+      // 일러스트를 줄였을 때 좌우 끝이 비어 보이지 않도록 가장자리 벽돌을 바깥으로 이어서 채움
+      if (x === -12) drawBrick(ctx, left - 72, y - 496, 56, 24, color);
+      if (x === 348) drawBrick(ctx, left + 408, y - 496, 56, 24, color);
+    }
     // 파티클
     for (const [x, y, s, color] of [[110, 534, 8, '#27d3ff'], [130, 570, 6, '#ff4fd8'], [286, 528, 8, '#ff9be8'], [272, 584, 6, '#27d3ff'], [92, 610, 6, '#a066ff'], [300, 634, 6, '#ffd23f']]) {
-      ctx.fillStyle = color; ctx.fillRect(Math.round(left + x), Math.round(wallTop + (y - 496)), s, s);
+      ctx.fillStyle = color; ctx.fillRect(Math.round(left + x), Math.round(y - 496), s, s);
     }
-    // 덕헤이 (3배 확대) — 벽돌 앞에 앉아 있음
-    SPRITES.drawDuck(ctx, Math.round(cx - 77), Math.round(wallTop + 26), 0.75);   // 204×260 → 153×195
+    // 덕헤이 (204×260 → 0.75배) — 벽돌 앞에 앉아 있음
+    SPRITES.drawDuck(ctx, -77, 26, 0.75);
+    ctx.restore();
   }
 
   // ==========================================
@@ -1017,5 +1033,6 @@
     // 폰트 로드 후 시작 화면 일러스트 그리기
     drawStartArt();
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawStartArt);
+    if (window.ResizeObserver) new ResizeObserver(() => { if (document.body.classList.contains('screen-start')) drawStartArt(); }).observe(document.querySelector('.start-col'));
   });
 })();

@@ -18,7 +18,7 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
-html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0536; font-family: var(--font); color: var(--white); letter-spacing: -0.02em; }
+html, body { width: 100%; height: 100%; height: 100dvh; overflow: hidden; overscroll-behavior: none; background: #0a0536; font-family: var(--font); color: var(--white); letter-spacing: -0.02em; }
 button { font-family: inherit; letter-spacing: inherit; color: inherit; cursor: pointer; }
 .px-img { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
 .grow { flex: 1; }
@@ -49,7 +49,7 @@ body.screen-play #dim { opacity: 1; }
 
 /* ===== 레이아웃 ===== */
 .col { width: 100%; max-width: 390px; margin: 0 auto; }
-#app { position: relative; z-index: 1; height: 100dvh; display: flex; flex-direction: column; }
+#app { position: relative; z-index: 1; height: 100vh; height: 100dvh; min-height: 0; display: flex; flex-direction: column; }
 .band { position: relative; background: var(--band); flex: none; }
 .band-top { height: 60px; border-bottom: 4px solid var(--gray-line); }
 .band-bottom { border-top: 4px solid var(--cyan); padding: 12px 12px calc(16px + env(safe-area-inset-bottom)); }
@@ -131,10 +131,10 @@ body.fx-damage .band-bottom { border-top-color: #ff4f6d; }
 .prize-msg { font-size: 13px; line-height: 1.7; color: var(--lav); }
 .prize-msg b { color: var(--gold); }
 
-/* ===== 시작 화면 ===== */
-.start { position: fixed; inset: 0; z-index: 60; overflow: auto; background: #0a0536 url('../assets/bg-neon-city.png') center bottom / cover no-repeat; image-rendering: pixelated; }
+/* ===== 시작 화면: 390 폭 기준, 세로는 기기 높이에 맞춰 반응형 (스크롤 없음) ===== */
+.start { position: fixed; inset: 0; z-index: 60; overflow: hidden; background: #0a0536 url('../assets/bg-neon-city.png') center bottom / cover no-repeat; image-rendering: pixelated; }
 body:not(.screen-start) .start { display: none; }
-.start-inner { position: relative; min-height: 797px; height: 100%; }
+.start-inner { position: relative; height: 100%; }
 #start-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
 .start-col { position: relative; padding: 20px 24px 0; display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .logo { display: flex; flex-direction: column; align-items: center; line-height: 1.2; font-size: 48px; font-weight: 700; letter-spacing: -0.04em; }
@@ -148,5 +148,28 @@ body:not(.screen-start) .start { display: none; }
 .tip-title { font-weight: 700; color: #9be7ff; }
 .cta { font-size: 22px; height: 52px; }
 .cta img { width: 12px; height: 21px; }
+
+/* 기기 높이가 844보다 낮아질수록 위쪽 영역을 단계별로 압축 (일러스트는 JS가 남은 공간에 맞춰 배치) */
+@media (max-height: 820px) {
+  .start-col { padding-top: 14px; gap: 10px; }
+  .logo { font-size: 44px; }
+}
+@media (max-height: 740px) {
+  .start-col { padding-top: 10px; gap: 8px; }
+  .logo { font-size: 36px; }
+  .logo span { -webkit-text-stroke-width: 3px; }
+  #gamepad { width: 40px; height: 20px; }
+  .chip { padding: 6px 16px; }
+  .info { padding: 8px 10px 10px; line-height: 1.45; }
+  .cta { height: 46px; font-size: 20px; }
+}
+@media (max-height: 660px) {
+  .start-col { padding-top: 8px; gap: 6px; }
+  .logo { flex-direction: row; gap: 8px; font-size: 32px; }
+  #gamepad { display: none; }
+  .info { padding: 6px 10px 8px; line-height: 1.4; }
+  .info p + p { margin-top: 2px; }
+  .cta { height: 44px; }
+}
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
