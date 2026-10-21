@@ -1,0 +1,215 @@
+@import url('https://cdn.jsdelivr.net/gh/MonadABXY/mona-font/web/mona.css');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+/* ===== 디자인 토큰 (Figma 'The-K_운영_문주' 레트로 벽돌깨기 UI 기준) ===== */
+:root {
+  --font: 'Mona12', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --gray-line: #8581b3;
+  --cyan: #27d3ff;
+  --pink: #ff4fd8;
+  --gold: #ffd700;
+  --yellow: #ffd23f;
+  --orange: #f5a31a;
+  --panel: #150a4a;
+  --panel-dark: #10073a;
+  --band: rgba(18, 6, 64, .9);
+  --white: #ffffff;
+  --lav: #c4b5fd;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+html, body { width: 100%; height: 100%; height: 100dvh; overflow: hidden; overscroll-behavior: none; background: #0a0536; font-family: var(--font); color: var(--white); letter-spacing: -0.02em; }
+button { font-family: inherit; letter-spacing: inherit; color: inherit; cursor: pointer; }
+.px-img { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+.grow { flex: 1; }
+
+/* ===== 배경: 네온 도시 + 플레이 영역 dim ===== */
+#bg { position: fixed; inset: 0; background: #0a0536 url('../assets/bg-neon-city.png') center bottom / cover no-repeat; image-rendering: pixelated; }
+#dim { position: fixed; inset: 0; opacity: 0; pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(4,1,18,.82) 0%, rgba(4,1,18,.74) 30%, rgba(4,1,18,.45) 65%, rgba(4,1,18,.35) 100%); }
+body.screen-play #dim { opacity: 1; }
+
+/* ===== 8비트 픽셀 테두리: 테두리 + 모서리 한 칸 컷 ===== */
+.pxbox { --u: 4px; --bc: var(--gray-line); --bg: var(--panel);
+  position: relative; border: var(--u) solid var(--bc); background: var(--bg);
+  clip-path: polygon(var(--u) 0, calc(100% - var(--u)) 0, calc(100% - var(--u)) var(--u), 100% var(--u), 100% calc(100% - var(--u)), calc(100% - var(--u)) calc(100% - var(--u)), calc(100% - var(--u)) 100%, var(--u) 100%, var(--u) calc(100% - var(--u)), 0 calc(100% - var(--u)), 0 var(--u), var(--u) var(--u)); }
+.btnwrap { filter: drop-shadow(0 4px 0 #2e2660); display: flex; }
+.btnwrap.block { width: 100%; }
+.btnwrap > .btn { flex: 1; }
+.btn { height: 44px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; font-size: 14px; font-weight: 700; line-height: 1; white-space: nowrap; border-radius: 0; }
+.btn::before { content: ''; position: absolute; left: var(--u); right: var(--u); top: 0; height: var(--u); background: rgba(255,255,255,.4); pointer-events: none; }
+.btn-secondary { color: var(--white); }
+.btn-secondary::before { background: rgba(255,255,255,.14); }
+.btn-primary, .btn-gold { color: #0a0536; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn:active:not(:disabled) { transform: translateY(2px); }
+.btn:focus-visible, .icon-btn:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+.icon-btn { width: 44px; height: 44px; display: grid; place-items: center; padding: 0; flex: none; }
+.icon-btn.plain { background: none; border: 0; clip-path: none; }
+
+/* ===== 레이아웃 ===== */
+.col { width: 100%; max-width: 375px; margin: 0 auto; }
+#app { position: relative; z-index: 1; height: 100vh; height: 100dvh; min-height: 0; display: flex; flex-direction: column; }
+.band { position: relative; background: var(--band); flex: none; }
+.band-top { height: 60px; border-bottom: 4px solid var(--gray-line); }
+.band-bottom { border-top: 4px solid var(--cyan); padding: 12px 12px calc(16px + env(safe-area-inset-bottom)); }
+.header-row { height: 100%; display: flex; align-items: center; gap: 8px; padding: 8px 12px; }
+.px-img.duck-head { width: 34px; height: 44px; flex: none; image-rendering: auto; }
+.titles { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.t-main { font-size: 16px; font-weight: 700; line-height: 1.4; text-shadow: 0 2px 0 #d946ef; white-space: nowrap; }
+.t-sub { font-size: 12px; font-weight: 700; color: #ffe066; line-height: 1.6; white-space: nowrap; }
+
+.play { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 12px; }
+.hud { height: 96px; display: flex; align-items: center; gap: 16px; padding: 8px 12px; flex: none; }
+.hud-item { display: flex; flex-direction: column; align-items: center; }
+.lbl { font-size: 12px; color: #9be7ff; line-height: 1.6; }
+.val { font-size: 22px; font-weight: 700; color: var(--gold); line-height: 1.2; }
+.btn-gold { padding: 0 12px; }
+#board { position: relative; flex: 1; min-height: 0; }
+#game-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+
+.hp-box { display: flex; flex-direction: column; gap: 4px; }
+.hp-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; }
+.lbl2 { color: var(--lav); }
+.hp-text { color: var(--white); }
+.hp-bar { height: 26px; padding: 2px; display: flex; gap: 2px; }
+.hp-bar .seg { flex: 1; background: #2a1a6e; }
+.hp-bar .seg.on { background: #46f0a0; }
+.hp-bar.mid .seg.on { background: #ffd23f; }
+.hp-bar.low .seg.on { background: #ff4f6d; }
+.hp-bar .seg.lost { background: rgba(255,79,109,.7); }
+.hp-bar.hit { --bc: #ff4f6d; }
+.hp-bar.heal { --bc: #46f0a0; }
+/* 체력이 깎일 때: 상단 라인·하단 라인·HP바 테두리가 빨강 (Figma 05 화면) */
+body.fx-damage .band-top { border-bottom-color: #ff4f6d; }
+body.fx-damage .band-bottom { border-top-color: #ff4f6d; }
+
+/* ===== 아이템 카드 (도감/알림 공용) ===== */
+.card { display: flex; --u: 4px; height: 96px; flex: none; }
+.card.owned { --bc: var(--gold); --bg: #fffdf5; color: #1b243b; }
+.card.locked { --bc: #5b3fd0; --bg: #1d0e58; color: #c4b5fd; }
+.card .stub { width: 64px; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: #2a0f7a; }
+.card.locked .stub { background: #140a40; }
+.card .stub img { width: 32px; height: 32px; }
+.card.locked .stub img { opacity: .4; }
+.card .stub small { font-size: 12px; font-weight: 700; color: var(--gold); line-height: 1; }
+.card.locked .stub small { color: #6b7896; }
+.card .body { flex: 1; min-width: 0; padding: 8px 12px; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.card .tag { align-self: flex-start; font-size: 12px; font-weight: 700; color: #fff; background: #ff4f6d; padding: 2px 8px; line-height: 1.4; }
+.card.locked .tag { background: #4b2fa8; color: #c4b5fd; }
+.card .title { font-size: 14px; font-weight: 700; line-height: 1.4; }
+.card .desc { font-size: 12px; line-height: 1.5; color: #455a64; }
+.card.locked .desc { color: #a99cf0; }
+
+.toast { position: fixed; z-index: 80; display: none; cursor: pointer; }
+.toast.show { display: block; }
+.toast .card { width: 100%; }
+
+/* ===== 팝업 ===== */
+.overlay { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(7, 3, 31, .88); }
+.overlay.active { display: flex; }
+.modal { width: 100%; max-width: 343px; max-height: calc(100dvh - 32px); display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.m-head { flex: none; display: flex; align-items: center; justify-content: space-between; padding: 8px 8px 8px 16px; background: #220f66; min-height: 60px; }
+.m-title { font-size: 16px; font-weight: 700; color: var(--gold); }
+.m-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding: 16px; }
+.m-body.center { align-items: center; text-align: center; }
+.m-foot { flex: none; display: flex; gap: 8px; padding: 12px 16px 16px; background: var(--panel-dark); }
+.stats { display: flex; gap: 8px; }
+.stat { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 8px; }
+.stat-l { font-size: 12px; color: #aab4cc; }
+.stat-n { font-size: 28px; font-weight: 700; color: var(--gold); line-height: 1.2; }
+.banner { padding: 12px; text-align: center; font-size: 14px; line-height: 1.8; color: var(--white); }
+.banner b { color: var(--gold); }
+.banner:empty { display: none; }
+/* 경품 없음 버전(?prize=off): 본인인증 버튼·문구 삭제, 도감 하단은 버튼 하나(계속하기/닫기) */
+body.no-prize #modal-wallet .m-foot .btnwrap { display: none; }
+body.no-prize #btn-wallet-resume { flex: 1; }
+.progress { display: flex; justify-content: center; gap: 4px; margin-top: 8px; }
+.progress span { width: 22px; height: 8px; background: #2e3d63; }
+.progress span.on { background: var(--gold); }
+.dex-body { overflow: hidden; }
+.dex-summary { flex: none; display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--lav); }
+.dex-summary b { color: var(--gold); }
+.dex-list { flex: 1; min-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 4px; }
+.prize-h { font-size: 16px; color: var(--white); line-height: 1.4; }
+.prize-msg { font-size: 13px; line-height: 1.7; color: var(--lav); }
+.prize-msg b { color: var(--gold); }
+
+/* ===== 시작 화면: 375 폭 기준, 세로는 기기 높이에 맞춰 반응형 (스크롤 없음) ===== */
+.start { position: fixed; inset: 0; z-index: 60; overflow: hidden; background: #0a0536 url('../assets/bg-neon-city.png') center bottom / cover no-repeat; image-rendering: pixelated; }
+body:not(.screen-start) .start { display: none; }
+.start-inner { position: relative; height: 100%; }
+#start-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+.start-col { position: relative; padding: 20px 24px 0; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.logo { display: flex; flex-direction: column; align-items: center; line-height: 1.2; font-size: 48px; font-weight: 700; letter-spacing: -0.02em; }
+.logo span { display: block; -webkit-text-stroke: 8px #27d3ff; paint-order: stroke fill; }
+.logo-1 { color: #fff; text-shadow: 0 4px 0 #1b3cff; }
+.logo-2 { color: #ff63e6; text-shadow: 0 4px 0 #7a1458; }
+.chip { padding: 8px 20px; font-size: 14px; font-weight: 700; flex: none; }
+.info { width: 100%; padding: 10px 12px 12px; font-size: 12px; line-height: 1.6; }
+.info p + p { margin-top: 4px; }
+.info-desc { text-align: center; }
+.tip-title { font-weight: 700; color: #9be7ff; }
+.cta { font-size: 22px; height: 52px; }
+.cta img { width: 12px; height: 21px; }
+
+/* 시작 화면 말풍선 — 흰 배경 + 연한 회색 픽셀 테두리 + 계단식으로 뾰족한 꼬리 (Figma 26.10.21) */
+.bubble { position: relative; flex: none; margin-bottom: 12px; max-width: 100%; }
+.bubble-box { --u: 4px; --bc: #ccd1db; --bg: #fff; padding: 4px 12px; font-size: 12px; line-height: 15px; font-weight: 400; color: #214099; text-align: center; white-space: nowrap; }
+.bubble-tail { position: absolute; left: calc(50% - 8px); top: calc(100% - 4px); width: 4px; height: 4px; pointer-events: none;
+  box-shadow: 4px 0 #fff, 8px 0 #fff,                                   /* 아래 테두리를 꼬리 폭만큼 열기 */
+              0 4px #ccd1db, 4px 4px #fff, 8px 4px #fff, 12px 4px #ccd1db,   /* 꼬리 1단 (16px) */
+              4px 8px #ccd1db, 8px 8px #ccd1db,                              /* 꼬리 2단 (8px) */
+              6px 12px #ccd1db; }                                            /* 뾰족한 끝 (4px) */
+
+/* 기기 높이가 844보다 낮아질수록 위쪽 영역을 단계별로 압축 (일러스트는 JS가 남은 공간에 맞춰 배치) */
+@media (max-height: 820px) {
+  .start-col { padding-top: 14px; gap: 10px; }
+  .logo { font-size: 44px; }
+}
+@media (max-height: 740px) {
+  .start-col { padding-top: 10px; gap: 8px; }
+  .logo { font-size: 36px; }
+  .logo span { -webkit-text-stroke-width: 6px; }
+  #gamepad { width: 40px; height: 20px; }
+  .chip { padding: 6px 16px; }
+  .info { padding: 8px 10px 10px; line-height: 1.45; }
+  .cta { height: 46px; font-size: 20px; }
+  .bubble { margin-bottom: 10px; }
+}
+@media (max-height: 660px) {
+  .start-col { padding-top: 8px; gap: 6px; }
+  .logo { flex-direction: row; gap: 8px; font-size: 32px; }
+  #gamepad { display: none; }
+  .info { padding: 6px 10px 8px; line-height: 1.4; }
+  .info p + p { margin-top: 2px; }
+  .cta { height: 44px; }
+  .bubble { margin-bottom: 8px; }
+  .bubble-box { padding: 3px 10px; }
+}
+
+
+/* ===== 경품 응모 완료 / 이벤트 중복 참여 방지 페이지 ===== */
+.result { position: fixed; inset: 0; z-index: 110; display: none; overflow: hidden; background: #0a0536 url('../assets/bg-neon-city.png') center bottom / cover no-repeat; image-rendering: pixelated; }
+body.screen-result .result { display: block; }
+.result-inner { position: relative; height: 100%; }
+.result-art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+.result-col { position: relative; height: 100%; padding: 24px 24px 28px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 16px; text-align: center; }
+.result-title { font-size: 38px; line-height: 1.2; font-weight: 700; letter-spacing: -0.02em; -webkit-text-stroke: 4px #27d3ff; paint-order: stroke fill; color: #fff; text-shadow: 0 4px 0 #1b3cff; margin-top: var(--hero-gap, 150px); }
+.result[data-kind="duplicate"] .result-title { -webkit-text-stroke-color: #ff4fd8; text-shadow: 0 4px 0 #7a1458; }
+.result-body { width: 100%; padding: 14px 12px; font-size: 14px; line-height: 1.7; color: var(--white); }
+.result-body .dim { color: var(--lav); }
+.result-btns { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+.result-btns > .btn { width: 100%; height: 52px; font-size: 16px; }
+.result-back { margin-top: 12px; }
+.result-back .btn { height: 52px; font-size: 18px; }
+
+.notice { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 200; display: none; padding: 10px 16px; background: var(--panel-dark); border: 4px solid var(--gray-line); color: var(--white); font-size: 14px; line-height: 1.4; max-width: calc(100vw - 32px); text-align: center; }
+.notice.show { display: block; }
+
+/* 기기 높이가 낮을수록 일러스트 영역과 간격을 압축 */
+@media (max-height: 820px) { .result-title { --hero-gap: 130px; font-size: 34px; } }
+@media (max-height: 740px) { .result-title { --hero-gap: 100px; font-size: 30px; -webkit-text-stroke-width: 4px; } .result-col { gap: 12px; padding-top: 16px; } .result-body { font-size: 13px; line-height: 1.6; padding: 10px; } .result-btns > .btn, .result-back .btn { height: 46px; } }
+@media (max-height: 660px) { .result-title { --hero-gap: 70px; font-size: 26px; } .result-col { gap: 10px; } .result-btns { gap: 8px; } .result-back { margin-top: 4px; } .result-btns > .btn, .result-back .btn { height: 42px; font-size: 14px; } }
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

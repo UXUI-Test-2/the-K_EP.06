@@ -887,8 +887,9 @@
     function showItemToast(item, coupon) {
       if (!coupon) return;           // 전 종류를 모은 뒤에는 HP 회복만
       const hud = $('hud').getBoundingClientRect();
-      toast.style.left = hud.left + 'px';
-      toast.style.top = hud.top + 'px';
+      const st = $('stage').getBoundingClientRect();   // fixed 요소가 #stage 기준이므로 스테이지 좌표로 환산
+      toast.style.left = (hud.left - st.left) + 'px';
+      toast.style.top = (hud.top - st.top) + 'px';
       toast.style.width = hud.width + 'px';
       toast.innerHTML = cardHtml(coupon, 'owned', COUPON_POOL.indexOf(coupon) + 1);
       updateWalletButton();

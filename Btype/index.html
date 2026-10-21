@@ -6,11 +6,12 @@
   <meta name="theme-color" content="#0a0536">
   <title>더케이 오락실 레트로 벽돌깨기</title>
   <meta name="description" content="The-K 더케이 오락실 — 8비트 레트로 벽돌깨기 게임">
-  <!-- 최종본 2026-10-21 (Figma 설계서 26.10.21 업데이트 반영) -->
+  <!-- 최종본 2026-10-21 · 모바일 375×812 전용 (이전 반응형 버전: ../history/Btype_20261021/) -->
   <link rel="icon" href="assets/favicon.png">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="screen-start">
+  <div id="stage"><!-- 모바일 375×812 전용: 화면이 커도 이 크기로만 표시 -->
   <div id="bg" aria-hidden="true"></div>
   <div id="dim" aria-hidden="true"></div>
 
@@ -134,6 +135,8 @@
     </div>
   </div>
   <div id="notice" class="notice" role="status" aria-live="polite"></div>
+
+  </div><!-- /#stage -->
 
   <script src="js/duck-data.js"></script>
   <script src="js/sprites.js"></script>
