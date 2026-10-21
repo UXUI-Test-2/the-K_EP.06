@@ -48,7 +48,7 @@ body.screen-play #dim { opacity: 1; }
 .icon-btn.plain { background: none; border: 0; clip-path: none; }
 
 /* ===== 레이아웃 ===== */
-.col { width: 100%; max-width: 390px; margin: 0 auto; }
+.col { width: 100%; max-width: 375px; margin: 0 auto; }
 #app { position: relative; z-index: 1; height: 100vh; height: 100dvh; min-height: 0; display: flex; flex-direction: column; }
 .band { position: relative; background: var(--band); flex: none; }
 .band-top { height: 60px; border-bottom: 4px solid var(--gray-line); }
@@ -108,7 +108,7 @@ body.fx-damage .band-bottom { border-top-color: #ff4f6d; }
 /* ===== 팝업 ===== */
 .overlay { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(7, 3, 31, .88); }
 .overlay.active { display: flex; }
-.modal { width: 100%; max-width: 358px; max-height: calc(100dvh - 32px); display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.modal { width: 100%; max-width: 343px; max-height: calc(100dvh - 32px); display: flex; flex-direction: column; padding: 0; overflow: hidden; }
 .m-head { flex: none; display: flex; align-items: center; justify-content: space-between; padding: 8px 8px 8px 16px; background: #220f66; min-height: 60px; }
 .m-title { font-size: 16px; font-weight: 700; color: var(--gold); }
 .m-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding: 16px; }
@@ -135,7 +135,7 @@ body.no-prize #btn-wallet-resume { flex: 1; }
 .prize-msg { font-size: 13px; line-height: 1.7; color: var(--lav); }
 .prize-msg b { color: var(--gold); }
 
-/* ===== 시작 화면: 390 폭 기준, 세로는 기기 높이에 맞춰 반응형 (스크롤 없음) ===== */
+/* ===== 시작 화면: 375 폭 기준, 세로는 기기 높이에 맞춰 반응형 (스크롤 없음) ===== */
 .start { position: fixed; inset: 0; z-index: 60; overflow: hidden; background: #0a0536 url('../assets/bg-neon-city.png') center bottom / cover no-repeat; image-rendering: pixelated; }
 body:not(.screen-start) .start { display: none; }
 .start-inner { position: relative; height: 100%; }
