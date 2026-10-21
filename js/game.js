@@ -117,6 +117,8 @@
   const MAX_BOMBS_PER_STAGE = 3;
   const GUARANTEE_BRICKS_PER_ITEM = 7;
   const MAX_STAGE = 3;
+  const BASE_BALL_SPEED = 320;        // 1단계 공 속도
+  const STAGE_SPEED_UP = 1.2;         // 스테이지를 깰 때마다 공 속도 +20% (설계서 26.10.21)
   const DROP_CHANCE = 0.18;
   const DROP_COOLDOWN_SEC = 3.0;
   const ITEM_SIZE = 48;               // 디자인 기준 크기 (원본 40)
@@ -153,6 +155,7 @@
   ];
 
   const PRIZE_CONFIG = {
+    enabled: new URLSearchParams(location.search).get('prize') !== 'off',   // 경품 있음(기본) / 경품 없음(?prize=off) 분기
     requiredCoupons: 3,
     prizeName: '경품',     // 확정 시 교체 (예: '커피 쿠폰')
     authUrl: '',           // 본인인증 페이지 URL — 비어 있으면 데모 모드(바로 응모 결과 화면으로 이동)
@@ -171,7 +174,7 @@
     }
     save() { try { localStorage.setItem('KTCU_BREAKER_COUPONS_V1', JSON.stringify(this.ids)); } catch (e) {} }
     get count() { return this.ids.length; }
-    get isPrizeReady() { return this.count >= PRIZE_CONFIG.requiredCoupons; }
+    get isPrizeReady() { return PRIZE_CONFIG.enabled && this.count >= PRIZE_CONFIG.requiredCoupons; }
     grant() {
       const remaining = COUPON_POOL.filter(c => !this.ids.includes(c.id));
       if (remaining.length === 0) return null;
@@ -341,7 +344,7 @@
       return true;
     }
 
-    // 스테이지별 차이는 벽돌 개수뿐: 1단계 4줄(28개)부터 1줄(7개)씩 늘어 3단계 6줄(42개), 모든 벽돌 1번에 깨짐
+    // 스테이지를 깰 때마다 벽돌 한 줄(7개)씩 늘고(1단계 4줄 28개 → 3단계 6줄 42개) 공 속도가 20%씩 빨라짐, 모든 벽돌 1번에 깨짐
     initStage(stageNum) {
       this.bricks = [];
       this.stageGiftDrops = 0;
@@ -367,11 +370,14 @@
       }
     }
 
+    // 현재 스테이지의 공 속도: 1단계 기준 스테이지마다 20%씩 증가
+    stageSpeed() { return BASE_BALL_SPEED * Math.pow(STAGE_SPEED_UP, this.stage - 1); }
+
     resetBallAndPaddle() {
       this.paddle.width = this.paddle.baseWidth;
       this.paddle.x = (this.width - this.paddle.width) / 2;
       this.ballAttached = true;
-      this.balls = [{ x: this.paddle.x + this.paddle.width / 2, y: this.paddle.y - 9, radius: 8, vx: 180, vy: -260, speed: 320 }];
+      this.balls = [{ x: this.paddle.x + this.paddle.width / 2, y: this.paddle.y - 9, radius: 8, vx: 180, vy: -260, speed: this.stageSpeed() }];
     }
 
     launchBall() {
@@ -379,7 +385,7 @@
       if (this.ballAttached) {
         this.ballAttached = false;
         const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.5;
-        const speed = 320;
+        const speed = this.stageSpeed();
         this.balls[0].vx = Math.cos(angle) * speed;
         this.balls[0].vy = Math.sin(angle) * speed;
         audio.playPaddleHit();
@@ -589,6 +595,7 @@
 
       this.stage++;
       this.addFloatingText(`STAGE ${this.stage} 돌파!`, this.width / 2, this.height / 2, '#ffd23f', 28);
+      this.addFloatingText('벽돌 +1줄 · 공 속도 +20%', this.width / 2, this.height / 2 + 28, '#ffffff', 14);
       setTimeout(() => {
         if (!this.isPlaying) return;
         this.initStage(this.stage);
@@ -828,10 +835,11 @@
     }
 
     function updateWalletButton() {
-      $('wallet-label').textContent = couponWallet.isPrizeReady ? '도감 · 응모 가능' : '아이템 도감';
+      $('wallet-label').textContent = couponWallet.isPrizeReady ? '도감 · 응모 가능' : '아이템 도감';   // 경품 없음 버전은 항상 '아이템 도감'
     }
 
     function prizeBannerHtml(isResult = false) {
+      if (!PRIZE_CONFIG.enabled) return '';   // 경품 없음: 본인인증·경품 안내 문구 삭제
       const need = PRIZE_CONFIG.requiredCoupons;
       const prize = escapeHtml(PRIZE_CONFIG.prizeName);
       if (couponWallet.isPrizeReady) {
@@ -853,7 +861,8 @@
       list.innerHTML = COUPON_POOL.map((c, i) => cardHtml(c, owned.has(c.id) ? 'owned' : 'locked', i + 1)).join('');
       list.scrollTop = 0;
       $('btn-prize-apply').disabled = !couponWallet.isPrizeReady;
-      $('btn-wallet-resume').textContent = game.isPlaying ? '계속하기' : '닫기';
+      // 경품 없음: 획득 아이템이 하나라도 있으면 '닫기', 없으면 '계속하기' / 경품 있음: 게임 진행 중이면 '계속하기', 끝났으면 '닫기'
+      $('btn-wallet-resume').textContent = PRIZE_CONFIG.enabled ? (game.isPlaying ? '계속하기' : '닫기') : (couponWallet.count > 0 ? '닫기' : '계속하기');
       $('modal-wallet').classList.add('active');
     }
     function closeWallet() { $('modal-wallet').classList.remove('active'); game.isPaused = false; }
@@ -883,7 +892,7 @@
       toast.style.width = hud.width + 'px';
       toast.innerHTML = cardHtml(coupon, 'owned', COUPON_POOL.indexOf(coupon) + 1);
       updateWalletButton();
-      if (couponWallet.count === PRIZE_CONFIG.requiredCoupons) {
+      if (PRIZE_CONFIG.enabled && couponWallet.count === PRIZE_CONFIG.requiredCoupons) {
         game.addFloatingText(`아이템 ${PRIZE_CONFIG.requiredCoupons}개 달성! 경품 응모 가능`, game.width / 2, game.height / 2 - 30, '#ffd700', 16);
       }
       toast.classList.add('show');
@@ -928,6 +937,7 @@
     }
 
     const game = new BrickBreakerGame(canvas, itemManager, couponWallet, handleStateChange, showItemToast);
+    document.body.classList.toggle('no-prize', !PRIZE_CONFIG.enabled);
     updateWalletButton();
 
     // ----- 경품 응모 완료 / 이벤트 중복 참여 방지 페이지 -----
@@ -990,7 +1000,7 @@
     function openLink(url) { if (url) window.open(url, '_blank', 'noopener'); else notify('연결 페이지를 준비하고 있어요.'); }
     $('btn-link-saving').addEventListener('click', () => openLink(PRIZE_CONFIG.savingUrl));
     $('btn-link-welfare').addEventListener('click', () => openLink(PRIZE_CONFIG.welfareUrl));
-    $('btn-result-back').addEventListener('click', () => showStart());   // 게임으로 돌아가기
+    $('btn-result-back').addEventListener('click', () => beginGame());   // 게임으로 돌아가기 → 스테이지 1로 이동 (설계서 26.10.21)
 
     // ----- 화면 전환 -----
     function showStart() {
@@ -1006,7 +1016,7 @@
     }
     function beginGame() {
       audio.init();
-      document.body.classList.remove('screen-start');
+      document.body.classList.remove('screen-start', 'screen-result');
       document.body.classList.add('screen-play');
       renderHp(HP_MAX); lastOn = 10;
       game.start();
