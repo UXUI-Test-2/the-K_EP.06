@@ -786,6 +786,18 @@
   // ==========================================
   document.addEventListener('DOMContentLoaded', () => {
     const $ = (id) => document.getElementById(id);
+
+    // 375×812 화면을 기기 크기에 맞춰 비율 그대로 확대/축소
+    const stage = $('stage');
+    function fitStage() {
+      const s = Math.min(window.innerWidth / 375, window.innerHeight / 812);
+      stage.style.setProperty('--fit', s);
+      return s;
+    }
+    const stageScale = () => stage.getBoundingClientRect().width / 375;   // 화면 좌표 → 스테이지 좌표 환산용
+    fitStage();
+    window.addEventListener('resize', fitStage);
+    window.addEventListener('orientationchange', fitStage);
     const itemManager = new ItemManager();
     const couponWallet = new CouponWallet();
 
@@ -888,9 +900,10 @@
       if (!coupon) return;           // 전 종류를 모은 뒤에는 HP 회복만
       const hud = $('hud').getBoundingClientRect();
       const st = $('stage').getBoundingClientRect();   // fixed 요소가 #stage 기준이므로 스테이지 좌표로 환산
-      toast.style.left = (hud.left - st.left) + 'px';
-      toast.style.top = (hud.top - st.top) + 'px';
-      toast.style.width = hud.width + 'px';
+      const k = stageScale();
+      toast.style.left = ((hud.left - st.left) / k) + 'px';
+      toast.style.top = ((hud.top - st.top) / k) + 'px';
+      toast.style.width = (hud.width / k) + 'px';
       toast.innerHTML = cardHtml(coupon, 'owned', COUPON_POOL.indexOf(coupon) + 1);
       updateWalletButton();
       if (PRIZE_CONFIG.enabled && couponWallet.count === PRIZE_CONFIG.requiredCoupons) {
@@ -1064,14 +1077,14 @@
       if (!mouseControlOn) {
         mouseControlOn = true;
         const rect = canvas.getBoundingClientRect();
-        game.setPaddleX(e.clientX - rect.left);
+        game.setPaddleX((e.clientX - rect.left) / stageScale());
       }
       game.launchBall();
     });
     window.addEventListener('mousemove', (e) => {
       if (!mouseControlOn || game.isPaused || !game.isPlaying) return;
       const rect = canvas.getBoundingClientRect();
-      game.setPaddleX(e.clientX - rect.left);
+      game.setPaddleX((e.clientX - rect.left) / stageScale());
     });
 
     const SWIPE_SENSITIVITY = 1.3, TAP_MAX_MOVE = 8, TAP_MAX_MS = 250;
@@ -1084,7 +1097,7 @@
     canvas.addEventListener('touchmove', (e) => {
       e.preventDefault();
       const x = e.touches[0].clientX;
-      game.movePaddleBy((x - touchLastX) * SWIPE_SENSITIVITY);
+      game.movePaddleBy(((x - touchLastX) / stageScale()) * SWIPE_SENSITIVITY);
       touchLastX = x;
     }, { passive: false });
     canvas.addEventListener('touchend', (e) => {
