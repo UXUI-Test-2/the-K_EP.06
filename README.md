@@ -80,3 +80,9 @@ Btype/assets/           네온 도시 배경, 아이템 도감 아이콘 10종
 
 - 폰트: [Mona12](https://github.com/MonadABXY/mona-font) (jsDelivr CDN), [Pretendard](https://github.com/orioncactus/pretendard) (폴백)
 - 이미지: 모두 8비트 도트로 직접 제작한 에셋입니다.
+
+
+## 시안 구성
+
+- B안: `/Btype/` — 반응형 8비트 네온 스타일
+- C안: `/Ctype/` — Figma 싱크 프로토타입(375 × 812 기준, 기기 크기에 맞춰 비율 확대/축소)

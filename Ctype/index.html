@@ -1,0 +1,2835 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#15151c">
+<title>더케이 오락실 레트로 벽돌깨기 · C안</title>
+<style>
+  @import url('https://cdn.jsdelivr.net/gh/neodgm/neodgm-pro-webfont@1.020/neodgm_pro/style.css');
+  @import url('https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy.css');
+
+  :root{
+    --w: 375px;
+    --h: 812px;
+  }
+
+  * { box-sizing: border-box; }
+  p, h1, h2, h3, h4, h5, h6 { margin: 0; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #15151c;
+    font-family: 'NeoDunggeunmo Pro', sans-serif;
+  }
+
+  body{
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    touch-action: none;
+  }
+
+  .devlabel{ display: none; }
+
+  /* 375 × 812 기준 화면 — 기기 크기에 맞춰 비율 그대로 확대/축소 */
+  .stage-frame{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: var(--w);
+    height: var(--h);
+    margin: calc(var(--h) / -2) 0 0 calc(var(--w) / -2);
+    transform: scale(var(--fit, 1));
+    transform-origin: center center;
+    overflow: hidden;
+    background: #000;
+  }
+
+  .screen{
+    position: absolute;
+    inset: 0;
+    width: var(--w);
+    height: var(--h);
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    cursor: pointer;
+  }
+  .screen.is-active{ pointer-events: auto; }
+
+  /* ---------- Screen 1 : 인트로 메인 ---------- */
+  #screen-1{ background: #f7f0d9; }
+  #screen-1 .bg-img{
+    position: absolute;
+    left: 50%;
+    top: calc(50% + 0.5px);
+    transform: translate(-50%, -50%);
+    width: 375px;
+    height: 813px;
+    object-fit: cover;
+    pointer-events: none;
+  }
+  #screen-1 .intro-caption{
+    position: absolute;
+    left: 187px;
+    top: 723px;
+    width: 286px;
+    transform: translateX(-50%);
+    font-size: 20px;
+    line-height: 24px;
+    letter-spacing: -0.8px;
+    color: #fff;
+    text-align: center;
+    animation: blink 1.4s ease-in-out infinite;
+  }
+  @keyframes blink{ 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+
+  /* ---------- Screen 2 : 게임 설명 / 시작 ---------- */
+  #screen-2{ background: #f7f0d9; }
+  #screen-2 .bg-img{
+    position: absolute;
+    left: 50%;
+    top: calc(50% + 0.5px);
+    transform: translate(-50%, -50%);
+    width: 375px;
+    height: 811px;
+    object-fit: cover;
+    pointer-events: none;
+  }
+
+  .s2-guide{
+    position: absolute;
+    left: 44px;
+    top: 215px;
+    width: 286px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .s2-guide-tag{
+    position: relative;
+    width: 157px;
+    height: 51px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .s2-guide-tag img{
+    position: absolute;
+    left: -72.61%;
+    top: -115.7%;
+    width: 245.22%;
+    height: 331.39%;
+    max-width: none;
+    pointer-events: none;
+  }
+  .s2-guide-tag span{
+    position: relative;
+    font-size: 16px;
+    letter-spacing: -0.64px;
+    color: #00154c;
+    white-space: nowrap;
+  }
+  .s2-guide-text{
+    font-size: 20px;
+    line-height: 24px;
+    letter-spacing: -0.8px;
+    color: #fff;
+    text-align: center;
+    margin: 0;
+  }
+  .s2-guide-text p{ margin: 0; }
+
+  .s2-tip{
+    position: absolute;
+    left: 13px;
+    top: 414px;
+    width: 348px;
+    height: 228px;
+    overflow: hidden;
+  }
+  .s2-tip img.bg{
+    position: absolute;
+    left: -18.39%;
+    top: -25.98%;
+    width: 136.78%;
+    height: 151.96%;
+    max-width: none;
+    pointer-events: none;
+  }
+  .s2-tip .tip-title{
+    position: absolute;
+    left: 174px;
+    top: 36px;
+    width: 286px;
+    transform: translateX(-50%);
+    font-size: 20px;
+    line-height: 24px;
+    letter-spacing: -0.8px;
+    color: #0e4cff;
+    text-align: center;
+  }
+  .s2-tip .tip-block{
+    position: absolute;
+    left: 36px;
+    width: 276px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+    line-height: 14px;
+    letter-spacing: -0.56px;
+    color: #1a3481;
+    text-align: center;
+  }
+  .s2-tip .tip-block p{ margin: 0; line-height: 14px; }
+  .s2-tip .tip-block.block-1{ top: 74px; }
+  .s2-tip .tip-block.block-2{ top: 122px; }
+
+  .s2-start-btn{
+    position: absolute;
+    left: 17px;
+    top: 707px;
+    width: 340px;
+    height: 75px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.12s ease;
+  }
+  .s2-start-btn:active{ transform: scale(0.97); }
+  .s2-start-btn img{
+    position: absolute;
+    left: -3.64%;
+    top: -29.85%;
+    width: 107.28%;
+    height: 161.19%;
+    max-width: none;
+    pointer-events: none;
+  }
+  .s2-start-btn span{
+    position: relative;
+    font-size: 24px;
+    letter-spacing: -0.96px;
+    color: #00154c;
+    white-space: nowrap;
+  }
+
+  .s2-bubble{
+    position: absolute;
+    left: 50%;
+    top: 660px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .s2-bubble .bubble-box{
+    background: #3368ff;
+    padding: 7px 19px;
+    border-radius: 24px;
+    margin-bottom: -7px;
+    white-space: nowrap;
+  }
+  .s2-bubble .bubble-box span{
+    font-family: 'Paperlogy', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 1.3;
+    letter-spacing: -0.36px;
+    color: #fff;
+  }
+  .s2-bubble .bubble-tail{
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .s2-bubble .bubble-tail img{
+    width: 12.4px;
+    height: 11px;
+    transform: rotate(180deg);
+  }
+
+  /* ---------- Screen 3 : 게임 실행 레이어 팝업 ---------- */
+  #screen-3{ background: #000; }
+  #screen-3 .particle-bg{
+    position: absolute;
+    left: calc(50% + 11px);
+    top: calc(50% + 19px);
+    transform: translate(-50%, -50%);
+    width: 601px;
+    height: 1062px;
+    opacity: 0.4;
+    object-fit: cover;
+    pointer-events: none;
+  }
+
+  .s3-header{
+    position: absolute;
+    left: 14px;
+    top: 24px;
+    width: 347px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .s3-logo{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-left: 6px;
+    width: 121px;
+  }
+  .s3-logo .line1{
+    position: relative;
+    width: 66px;
+    height: 10px;
+    overflow: hidden;
+  }
+  .s3-logo .line1 img{
+    position: absolute;
+    left: -184.96%;
+    top: -105.88%;
+    width: 315.04%;
+    height: 1411.76%;
+    max-width: none;
+  }
+  .s3-logo .line2{
+    display: flex;
+    align-items: center;
+    gap: 1px;
+  }
+  .s3-logo .line2 .a{
+    position: relative;
+    width: 55px;
+    height: 18px;
+    overflow: hidden;
+  }
+  .s3-logo .line2 .a img{
+    position: absolute;
+    left: -21.13%;
+    top: -62.86%;
+    width: 140.02%;
+    height: 287.14%;
+    max-width: none;
+  }
+  .s3-logo .line2 .b{
+    position: relative;
+    width: 65px;
+    height: 18px;
+    overflow: hidden;
+  }
+  .s3-logo .line2 .b img{
+    position: absolute;
+    left: -3.91%;
+    top: -155.5%;
+    width: 106.99%;
+    height: 260.76%;
+    max-width: none;
+  }
+  .s3-icons{
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .s3-icon{
+    position: relative;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+  }
+  .s3-icon.icon-sound.muted{
+    opacity: 0.45;
+  }
+  .s3-icon .circle{
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+  .s3-icon .circle img{
+    position: absolute;
+    max-width: none;
+  }
+  .s3-icon.icon-sound .circle img{
+    left: -13.46%; top: -16.33%; width: 126.92%; height: 134.69%;
+  }
+  .s3-icon.icon-settings .circle img{
+    left: -13.69%; top: -16.18%; width: 127.38%; height: 134.41%;
+  }
+  .s3-icon .glyph{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    overflow: hidden;
+  }
+  .s3-icon.icon-sound .glyph{
+    width: 12px; height: 13px;
+    transform: translate(-50%, calc(-50% - 0.5px));
+  }
+  .s3-icon.icon-sound .glyph img{
+    position: absolute;
+    left: -184.38%; top: -22.96%; width: 317.92%; height: 151.06%;
+    max-width: none;
+  }
+  .s3-icon.icon-settings .glyph{
+    width: 12px; height: 12px;
+    transform: translate(-50%, -50%);
+  }
+  .s3-icon.icon-settings .glyph img{
+    position: absolute;
+    left: -34.77%; top: -33.21%; width: 317.92%; height: 163.65%;
+    max-width: none;
+  }
+
+  .s3-statbar{
+    position: absolute;
+    left: 14px;
+    top: 64px;
+    width: 347px;
+    height: 48px;
+    border-radius: 10px;
+    border: 1px solid #433f62;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 8px 8px 20px;
+    overflow: hidden;
+  }
+  .s3-statbar .stats{
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 18px;
+    white-space: nowrap;
+  }
+  .s3-statbar .stats .label{ color: #fff; margin-right: 6px; }
+  .s3-statbar .stats .value{ color: #fed718; }
+  .s3-statbar .divider{
+    width: 1px;
+    height: 12px;
+    background: #433f62;
+  }
+  .item-btn-wrap{
+    position: relative;
+    width: 99px;
+    height: 32px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .item-btn-wrap .dex-badge{
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 18px;
+    height: 18px;
+    z-index: 2;
+    display: none;
+    animation: item-sway 0.7s ease-in-out infinite alternate;
+  }
+  .item-btn-wrap .dex-badge.show{ display: block; }
+
+  .s3-statbar .item-btn{
+    position: relative;
+    width: 99px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 16px 8px 12px;
+    overflow: hidden;
+  }
+  .s3-statbar .item-btn img.bg{
+    position: absolute;
+    left: -44.62%; top: -67.11%; width: 189.23%; height: 234.23%;
+    max-width: none;
+  }
+  .s3-statbar .item-btn img.icon{
+    position: relative;
+    width: 16px;
+    height: 16px;
+    object-fit: cover;
+  }
+  .s3-statbar .item-btn span{
+    position: relative;
+    font-size: 10px;
+    letter-spacing: -0.4px;
+    color: #1a3481;
+    white-space: nowrap;
+  }
+
+  .s3-board{
+    position: absolute;
+    left: 14px;
+    top: 122px;
+    width: 347px;
+    height: 614px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000019;
+  }
+  .s3-board .board-bg{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 347px;
+    height: 618px;
+    object-fit: cover;
+    pointer-events: none;
+  }
+  .s3-bricks{
+    position: absolute;
+    left: 20px;
+    top: 0;
+    width: 308px;
+    height: 100%;
+  }
+  .s3-bricks .row{
+    position: absolute;
+    left: 0;
+    width: 308px;
+    height: 13px;
+    display: flex;
+    gap: 4px;
+    transition: top 0.35s ease;
+  }
+  .s3-bricks .brick{
+    position: relative;
+    width: 48px;
+    height: 13px;
+    overflow: hidden;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+    transform-origin: center;
+  }
+  .s3-bricks .brick.dead{
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  .s3-bricks .brick img{
+    position: absolute;
+    max-width: none;
+  }
+  .s3-bricks .row1 .brick img,
+  .s3-bricks .row2 .brick img,
+  .s3-bricks .row3 .brick img{
+    height: 425.81%;
+    width: 335.44%;
+    top: -90.32%;
+  }
+  .s3-bricks .row1 .brick img{ left: -6.28%; }
+  .s3-bricks .row2 .brick img{ left: -118.46%; }
+  .s3-bricks .row3 .brick img{ left: -228.16%; }
+  .s3-bricks .row4 .brick img,
+  .s3-bricks .row5 .brick img{
+    top: -221.12%; width: 319.63%; height: 405.74%;
+  }
+  .s3-bricks .row4 .brick img{ left: -166.06%; }
+  .s3-bricks .row5 .brick img{ left: -54.27%; }
+
+  .stage-announce{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 15;
+  }
+  .stage-announce .sa-stage{
+    font-size: 30px;
+    color: #2ed1fb;
+    white-space: nowrap;
+  }
+  .stage-announce .sa-speed{
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .stage-announce .sa-speed img{ width: 29px; height: 29px; }
+  .stage-announce .sa-speed span{
+    font-size: 24px;
+    color: #fed718;
+    padding-top: 4px;
+    white-space: nowrap;
+  }
+
+  /* ---------- 아이템 도감 팝업 ---------- */
+  .dex-overlay{
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 40;
+  }
+  .dex-overlay.show{ opacity: 1; pointer-events: auto; }
+  .dex-panel{
+    width: 347px;
+    background: #1f1f23;
+    border: 1px solid #433f62;
+    border-radius: 12px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .dex-header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+  .dex-header .dex-title{
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .dex-header .dex-title img{ width: 22px; height: 22px; }
+  .dex-header .dex-title span{
+    color: #fed718;
+    font-size: 16px;
+    letter-spacing: -0.64px;
+  }
+  .dex-close{
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #cfd4ff;
+    font-size: 16px;
+    background: #433f62;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  .dex-progress{
+    background: #11111b;
+    border: 1px solid #fed718;
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+  }
+  .dex-progress p{
+    font-size: 14px;
+    line-height: 17px;
+    color: #fff;
+    text-align: center;
+    margin: 0;
+  }
+  .dex-progress p .hl{ color: #fed718; }
+  .dex-progress-slots{
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .dex-progress-slots img{
+    width: 40px;
+    height: 40px;
+  }
+  .dex-progress-slots img.empty{
+    filter: brightness(0);
+  }
+  .dex-count-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 10px;
+  }
+  .dex-count-row .left{ color: #fff; }
+  .dex-count-row .right{ color: #a5a5a7; }
+  .dex-count-row .right .hl{ color: #fed718; }
+  .dex-list-wrap{
+    position: relative;
+    width: 100%;
+  }
+  .dex-list{
+    background: #11111b;
+    border-radius: 10px;
+    height: 300px;
+    overflow-y: auto;
+    padding: 14px;
+    padding-right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    scrollbar-width: none;
+  }
+  .dex-list::-webkit-scrollbar{ display: none; }
+  .dex-row{
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .dex-row .dex-icon{
+    width: 60px;
+    height: 60px;
+    border-radius: 11px;
+    background: #00010c;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .dex-row .dex-icon img{
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+  }
+  .dex-row.locked .dex-icon img{ filter: grayscale(1) brightness(0.75); }
+  .dex-row .dex-info{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+  }
+  .dex-row .dex-tag{
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 8px;
+    width: fit-content;
+  }
+  .dex-row.locked .dex-tag{
+    background: #00010c;
+    color: rgba(255,255,255,0.6);
+  }
+  .dex-row.locked .dex-tag img{ width: 12px; height: 12px; opacity: 0.6; }
+  .dex-row.unlocked .dex-tag{
+    background: #20e278;
+    color: #000;
+  }
+  .dex-row .dex-name{
+    font-size: 12px;
+    color: #fff;
+  }
+  .dex-row .dex-desc{
+    font-size: 10px;
+    color: #fff;
+  }
+  .dex-row.locked .dex-name,
+  .dex-row.locked .dex-desc{ opacity: 0.6; }
+  .dex-divider{
+    height: 1px;
+    background: rgba(255,255,255,0.12);
+    width: 100%;
+  }
+  .dex-scrollbar{
+    position: absolute;
+    top: 8px;
+    right: 4px;
+    bottom: 8px;
+    width: 8px;
+    background: #00010c;
+    border-radius: 999px;
+    pointer-events: none;
+  }
+  .dex-scrollbar-thumb{
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 8px;
+    border-radius: 999px;
+    background: #fed718;
+  }
+  .dex-footer{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+  .dex-continue{
+    background: #11111b;
+    border: none;
+    border-radius: 10px;
+    padding: 9px 10px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    color: #fff;
+    font-size: 12px;
+    font-family: 'NeoDunggeunmo Pro', sans-serif;
+    cursor: pointer;
+  }
+  .dex-claim{
+    position: relative;
+    flex: 1;
+    height: 42px;
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    filter: grayscale(1) brightness(0.6);
+    pointer-events: none;
+    background: transparent;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .dex-claim.active{
+    filter: none;
+    pointer-events: auto;
+  }
+  .dex-claim img.bg{
+    position: absolute;
+    left: -3.5%;
+    top: -42.54%;
+    width: 107.01%;
+    height: 187.78%;
+    max-width: none;
+  }
+  .dex-claim img.icon{
+    position: relative;
+    width: 26px;
+    height: 26px;
+  }
+  .dex-claim span{
+    position: relative;
+    color: #1a3481;
+    font-size: 13px;
+    font-family: 'NeoDunggeunmo Pro', sans-serif;
+  }
+
+  .s3-start-text{
+    position: absolute;
+    left: 50%;
+    top: calc(50% - 12px);
+    width: 286px;
+    transform: translateX(-50%);
+    font-size: 20px;
+    line-height: 24px;
+    letter-spacing: -0.8px;
+    color: #fff;
+    text-align: center;
+  }
+
+  .s3-character{
+    position: absolute;
+    top: 544px;
+    width: 80px;
+    height: 70px;
+    cursor: grab;
+    overflow: hidden;
+    transition: transform 0.15s cubic-bezier(.34,1.8,.64,1);
+  }
+  .s3-character img{
+    position: absolute;
+    left: 0;
+    top: -14.29%;
+    width: 100%;
+    height: 114.29%;
+    max-width: none;
+    pointer-events: none;
+  }
+  .s3-character.hit{
+    transform: scaleX(1.18) scaleY(0.85);
+  }
+
+  .s3-ball{
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .s3-ball img{
+    position: absolute;
+    left: -20.83%;
+    top: -20.83%;
+    width: 141.67%;
+    height: 141.67%;
+    max-width: none;
+  }
+
+  .ball-trail{
+    position: absolute;
+    width: 54px;
+    height: 54px;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 4;
+    transform-origin: 32.1% 33.1%;
+  }
+  .ball-trail img{
+    width: 100%;
+    height: 100%;
+  }
+
+  .brick-particle{
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 6;
+  }
+
+  .hit-ring{
+    position: absolute;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid #fff6c2;
+    pointer-events: none;
+    z-index: 5;
+    transform: translate(-50%, -50%);
+  }
+
+  .trail-ghost{
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff6c2 0%, #ffd23f 35%, #ff5fa2 70%, rgba(255,95,162,0) 100%);
+    pointer-events: none;
+    z-index: 3;
+    transform: translate(-50%, -50%);
+  }
+
+  .s3-board{
+    touch-action: none;
+  }
+
+  .falling-item{
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    pointer-events: none;
+    animation: item-sway 0.7s ease-in-out infinite alternate;
+    z-index: 4;
+  }
+  @keyframes item-sway{
+    from { transform: rotate(-8deg); }
+    to   { transform: rotate(8deg); }
+  }
+
+  .s3-gameover{
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: rgba(0,0,0,0.78);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 30;
+  }
+  .s3-gameover.show{ opacity: 1; pointer-events: auto; }
+  .s3-gameover .go-title{
+    font-size: 32px;
+    color: #ff4d4d;
+    letter-spacing: -1px;
+  }
+  .s3-gameover .go-score{
+    font-size: 16px;
+    color: #fed718;
+  }
+  .s3-gameover .go-sub{
+    font-size: 12px;
+    color: #cfd4ff;
+  }
+
+  /* ---------- 스테이지(게임) 완료 팝업 ---------- */
+  .gc-panel{
+    width: 311px;
+    background: #1f1f23;
+    border: 1px solid #433f62;
+    border-radius: 12px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .gc-title-row{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .gc-title{
+    font-size: 24px;
+    color: #2ed1fb;
+    margin-bottom: -9px;
+    position: relative;
+    z-index: 1;
+    white-space: nowrap;
+  }
+  .gc-trophy{ width: 160px; height: 150px; object-fit: contain; }
+  .gc-stats{
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+  .gc-stat-box{
+    flex: 1;
+    background: #11111b;
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .gc-stat-box span{ font-size: 12px; color: #fff; }
+  .gc-stat-box b{ font-size: 30px; color: #2ed1fb; font-weight: normal; }
+  .gc-footer{
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+    width: 100%;
+  }
+  .gc-again-btn{
+    position: relative;
+    flex: 1;
+    height: 42px;
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    cursor: pointer;
+    background: transparent;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .gc-again-btn img.bg{
+    position: absolute;
+    left: -2.44%;
+    top: -51.68%;
+    width: 104.89%;
+    height: 196.65%;
+    max-width: none;
+  }
+  .gc-again-btn img.icon{
+    position: relative;
+    width: 22px;
+    height: 22px;
+  }
+  .gc-again-btn span{
+    position: relative;
+    color: #1a3481;
+    font-size: 13px;
+    font-family: 'NeoDunggeunmo Pro', sans-serif;
+  }
+
+  .hp-float{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 15;
+    font-size: 30px;
+    white-space: nowrap;
+  }
+  .hp-float img{ width: 35px; height: 35px; }
+  .hp-float .amt{ padding-top: 8px; }
+  .hp-float.gain .amt{ color: #20e278; }
+  .hp-float.loss .amt{ color: #ef2336; }
+
+  .gift-banner{
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform: translateY(-100%);
+    transition: transform 0.4s ease;
+    width: 375px;
+    backdrop-filter: blur(8.5px);
+    background: rgba(22,30,49,0.93);
+    box-shadow: 0 0 1px 0 #20e278, 0 14px 24px 0 rgba(32,226,120,0.43);
+    border-radius: 0 0 10px 10px;
+    padding: 14px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 20;
+  }
+  .gift-banner.show{ transform: translateY(0); }
+  .gift-banner .gb-top{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+  .gift-banner .gb-get{
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .gift-banner .gb-get img{ width: 22px; height: 22px; }
+  .gift-banner .gb-get span{ color: #20e278; font-size: 16px; padding-top: 4px; }
+  .gift-banner .gb-tag{
+    background: #fed718;
+    border-radius: 5px;
+    padding: 2px 3px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .gift-banner .gb-tag img{ width: 16px; height: 16px; }
+  .gift-banner .gb-tag span{ color: #1a3481; font-size: 8px; white-space: nowrap; }
+  .gift-banner .gb-body{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .gift-banner .gb-icon{
+    background: #00010c;
+    border: 1px solid #20e278;
+    border-radius: 10px;
+    width: 55px;
+    height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .gift-banner .gb-icon img{ width: 40px; height: 40px; }
+  .gift-banner .gb-text{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: #fff;
+  }
+  .gift-banner .gb-text .gb-name{ font-size: 16px; }
+  .gift-banner .gb-text .gb-desc{ font-size: 12px; }
+  .gift-banner .gb-cat{
+    background: #20e278;
+    border-radius: 4px;
+    padding: 2px 4px;
+    display: inline-flex;
+    width: fit-content;
+    color: #000;
+    font-size: 8px;
+  }
+
+  .s3-hp{
+    position: absolute;
+    left: 14px;
+    top: 752px;
+    width: 347px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .s3-hp .row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+  .s3-hp .hp-label{
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .s3-hp .hp-label img{ width: 10px; height: 10px; object-fit: cover; }
+  .s3-hp .hp-label span{ font-size: 10px; color: #fff; }
+  .s3-hp .hp-value{
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+  }
+  .s3-hp .hp-value .cur{ color: #fff; }
+  .s3-hp .hp-value .slash, .s3-hp .hp-value .max{ color: #4a608d; }
+  .s3-hp .hp-bar{
+    position: relative;
+    width: 100%;
+    height: 20px;
+    overflow: hidden;
+  }
+  .s3-hp .hp-bar img{
+    position: absolute;
+    left: -2.99%; top: -206.43%; width: 105.98%; height: 517.86%;
+    max-width: none;
+  }
+
+  /* ===================== 경품 응모 플로우 (라이트 테마) ===================== */
+  .claim-screen{
+    background: #fff;
+    color: #111;
+    font-family: 'Paperlogy', sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
+  .claim-topbar{
+    flex-shrink: 0;
+    padding: 34px 20px 15px;
+  }
+  .claim-back{
+    position: relative;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+  }
+  .claim-back img{
+    position: absolute;
+    top: 8.33%;
+    right: 27.08%;
+    bottom: 12.5%;
+    left: 29.17%;
+    width: 43.75%;
+    height: 79.17%;
+  }
+  .claim-body{
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .claim-title h2{
+    font-weight: 700;
+    font-size: 26px;
+    letter-spacing: -0.52px;
+    line-height: 1.3;
+    margin: 0 0 12px;
+    text-transform: uppercase;
+    padding: 0 8px;
+  }
+  .claim-sub{
+    font-size: 16px;
+    opacity: 0.6;
+    line-height: 1.3;
+    margin: 0;
+    padding: 0 8px;
+  }
+  .claim-illust{
+    width: 100%;
+    max-width: 343px;
+    height: 200px;
+    margin: 8px auto 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .claim-illust img{ width: 100%; }
+  .claim-terms{
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-top: 12px;
+  }
+  .claim-term-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+    cursor: pointer;
+    min-height: 24px;
+    gap: 12px;
+  }
+  .claim-term-label{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 16px;
+    font-weight: 500;
+    opacity: 0.9;
+    line-height: 1.4;
+  }
+  .claim-term-label img{ width: 24px; height: 24px; flex-shrink: 0; }
+  .claim-term-row .chev{ width: 24px; height: 24px; flex-shrink: 0; transition: transform 0.2s; }
+  .claim-term-body{
+    display: none;
+    background: #f5f8fb;
+    border-radius: 18px;
+    padding: 18px;
+    font-size: 14px;
+    opacity: 0.7;
+    line-height: 1.5;
+    margin-top: 8px;
+  }
+  .claim-term.open .claim-term-body{ display: block; }
+  .claim-term.open .chev{ transform: rotate(180deg); }
+
+  .claim-bottom{
+    flex-shrink: 0;
+    padding: 10px 16px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+  }
+  .claim-gradient{
+    position: absolute;
+    left: 0; right: 0;
+    bottom: 100%;
+    height: 40px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0), #fff);
+    pointer-events: none;
+  }
+  .claim-btn-primary{
+    width: 100%;
+    background: #2b4095;
+    color: #fff;
+    border: none;
+    border-radius: 18px;
+    padding: 18px;
+    font-size: 18px;
+    font-weight: 500;
+    font-family: 'Paperlogy', sans-serif;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+  .claim-btn-outline{
+    width: 100%;
+    background: #fff;
+    color: #2b4095;
+    border: 1px solid #2b4095;
+    border-radius: 18px;
+    padding: 18px;
+    font-size: 18px;
+    font-weight: 500;
+    font-family: 'Paperlogy', sans-serif;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+
+  .claim-table{
+    border: 1px solid #e1e4e9;
+    border-radius: 18px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin: 28px 8px 0;
+    font-size: 16px;
+    font-weight: 500;
+  }
+  .claim-table-row{ display: flex; justify-content: space-between; }
+  .claim-table-row .k{ opacity: 0.6; }
+  .claim-table-row .v{ text-align: right; }
+
+  .claim-bubble{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .claim-bubble-box{
+    background: #3368ff;
+    color: #fff;
+    font-size: 12px;
+    letter-spacing: -0.36px;
+    text-align: center;
+    padding: 7px 19px;
+    border-radius: 24px;
+    margin-bottom: -7px;
+    white-space: nowrap;
+  }
+  .claim-bubble-tail{
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .claim-bubble-tail img{
+    width: 12.4px;
+    height: 11px;
+    transform: rotate(180deg);
+  }
+
+  .claim-result{
+    align-items: center;
+  }
+  .claim-result .claim-body{
+    align-items: center;
+    padding-top: 60px;
+    overflow: visible;
+  }
+  .claim-result-title{
+    text-align: center;
+    padding: 0 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .claim-result-title h2{
+    font-weight: 700;
+    font-size: 30px;
+    letter-spacing: 0.6px;
+    margin: 0;
+    text-transform: uppercase;
+  }
+  .claim-result-sub{ font-size: 16px; opacity: 0.6; line-height: 1.5; margin: 0; }
+  .claim-result-note{ font-size: 14px; color: #377dff; line-height: 1.5; margin: 0; }
+  .claim-duck{ width: 240px; height: 240px; margin-top: 12px; }
+  .claim-duck img{ width: 100%; height: 100%; object-fit: cover; }
+
+  .claim-game-card{
+    position: relative;
+    width: 100%;
+    border-radius: 18px;
+    overflow: hidden;
+    padding: 16px 14px;
+    cursor: pointer;
+    background: #000019;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .claim-game-bg{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 150%;
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  .claim-game-logo{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-self: flex-start;
+  }
+  .claim-game-logo .l1{ width: 66px; height: 10px; overflow: hidden; position: relative; }
+  .claim-game-logo .l1 img{ position: absolute; left: -184.96%; top: -105.88%; width: 315.04%; height: 1411.76%; max-width: none; }
+  .claim-game-logo .l2{ display: flex; gap: 1px; }
+  .claim-game-logo .l2 .a{ width: 55px; height: 18px; overflow: hidden; position: relative; }
+  .claim-game-logo .l2 .a img{ position: absolute; left: -21.13%; top: -62.86%; width: 140.02%; height: 287.14%; max-width: none; }
+  .claim-game-logo .l2 .b{ width: 65px; height: 18px; overflow: hidden; position: relative; }
+  .claim-game-logo .l2 .b img{ position: absolute; left: -3.91%; top: -155.5%; width: 106.99%; height: 260.76%; max-width: none; }
+  .claim-game-btn{
+    position: relative;
+    width: 100%;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 8px;
+  }
+  .claim-game-btn img{
+    position: absolute;
+    left: -3.64%; top: -29.85%; width: 107.28%; height: 161.19%;
+    max-width: none;
+  }
+  .claim-game-btn span{
+    position: relative;
+    font-family: 'NeoDunggeunmo Pro', sans-serif;
+    font-size: 16px;
+    color: #00154c;
+  }
+
+  .reset-btn[hidden]{ display: none; }
+  .reset-btn{
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 12px;
+    color: #8a8a9a;
+    background: #1f1f29;
+    border: 1px solid #333340;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+  .reset-btn:hover{ color: #fff; border-color: #555; }
+</style>
+</head>
+<body>
+
+  <div class="stage-frame">
+
+    <!-- Screen 1 : 인트로 메인 -->
+    <div id="screen-1" class="screen is-active">
+      <img class="bg-img" src="assets/brick-game/s1-bg.png" alt="">
+      <p class="intro-caption">- 화면을 클릭하세요 -</p>
+    </div>
+
+    <!-- Screen 2 : 게임 설명 / 시작 -->
+    <div id="screen-2" class="screen">
+      <img class="bg-img" src="assets/brick-game/s2-bg.png" alt="">
+
+      <div class="s2-guide">
+        <div class="s2-guide-tag">
+          <img src="assets/brick-game/tag-guide-bg.png" alt="">
+          <span>게임 설명</span>
+        </div>
+        <div class="s2-guide-text">
+          <p>아래 바를 한번 누르고</p>
+          <p>원하는 방향으로 움직이면서</p>
+          <p>벽돌을 깰 수 있어요!</p>
+          <p>떨어지는 아이템을 놓치지마세요!</p>
+        </div>
+      </div>
+
+      <div class="s2-tip">
+        <img class="bg" src="assets/brick-game/tip-box-bg.png" alt="">
+        <p class="tip-title">게임 TIP</p>
+        <div class="tip-block block-1">
+          <p>[경품 받기]</p>
+          <p>아이템을 3개 획득하면 경품을 받을 수 있어요.</p>
+        </div>
+        <div class="tip-block block-2">
+          <p>[HP 지키기]</p>
+          <p>폭탄을 피하지 못하거나 공을 놓치면</p>
+          <p>HP가 줄어들어요.</p>
+          <p>HP가 모두 줄어들면 게임 오버!</p>
+        </div>
+      </div>
+
+      <div class="s2-bubble">
+        <div class="bubble-box"><span>벽돌 꺠고 떨어지는 아이템을 받아보세요!</span></div>
+        <div class="bubble-tail"><img src="assets/brick-game/s2-bubble-tail.svg" alt=""></div>
+      </div>
+
+      <div id="btn-start" class="s2-start-btn">
+        <img src="assets/brick-game/btn-start-bg.png" alt="">
+        <span>게임 시작하기</span>
+      </div>
+    </div>
+
+    <!-- Screen 3 : 게임 실행 레이어 팝업 -->
+    <div id="screen-3" class="screen">
+      <img class="particle-bg" src="assets/brick-game/s3-particle-bg.png" alt="">
+
+      <div class="gift-banner" id="gift-banner">
+        <div class="gb-top">
+          <div class="gb-get">
+            <img src="assets/brick-game/item-gift.png" alt="">
+            <span>GET!</span>
+          </div>
+          <div class="gb-tag">
+            <img src="assets/brick-game/s3-item-book-icon.png" alt="">
+            <span id="gb-registered">아이템 도감 등록 완료!</span>
+          </div>
+        </div>
+        <div class="gb-body">
+          <div class="gb-icon"><img id="gb-icon-img" src="assets/brick-game/gift-item-01.png" alt=""></div>
+          <div class="gb-text">
+            <span class="gb-cat" id="gb-cat">저축상품</span>
+            <span class="gb-name" id="gb-name">장기저축급여</span>
+            <span class="gb-desc" id="gb-desc">급여율 5.0%, 연복리로 목돈 불리기</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="s3-header">
+        <div class="s3-logo">
+          <div class="line1"><img src="assets/brick-game/s3-logo-sprite-a.png" alt=""></div>
+          <div class="line2">
+            <div class="a"><img src="assets/brick-game/s3-logo-sprite-a.png" alt=""></div>
+            <div class="b"><img src="assets/brick-game/s3-logo-sprite-b.png" alt=""></div>
+          </div>
+        </div>
+        <div class="s3-icons">
+          <div class="s3-icon icon-sound" id="sound-toggle-btn">
+            <div class="circle"><img src="assets/brick-game/s3-icon-circle-bg1.png" alt=""></div>
+            <div class="glyph"><img src="assets/brick-game/s3-icon-glyph-sprite.png" alt=""></div>
+          </div>
+          <div class="s3-icon icon-settings">
+            <div class="circle"><img src="assets/brick-game/s3-icon-circle-bg2.png" alt=""></div>
+            <div class="glyph"><img src="assets/brick-game/s3-icon-glyph-sprite.png" alt=""></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="s3-statbar">
+        <div class="stats">
+          <span><span class="label">STAGE</span><span class="value" id="stage-value">1</span></span>
+          <span class="divider"></span>
+          <span><span class="label">BRICKS</span><span class="value" id="bricks-count">30</span></span>
+        </div>
+        <div class="item-btn-wrap" id="dex-btn">
+          <div class="item-btn">
+            <img class="bg" src="assets/brick-game/s3-item-btn-bg.png" alt="">
+            <img class="icon" src="assets/brick-game/s3-item-book-icon.png" alt="">
+            <span>아이템 도감</span>
+          </div>
+          <img class="dex-badge" id="dex-badge" src="assets/brick-game/badge-new.png" alt="">
+        </div>
+      </div>
+
+      <div class="s3-board" id="game-board">
+        <img class="board-bg" src="assets/brick-game/s3-panel-bg.png" alt="">
+
+        <div class="s3-bricks" id="bricks-layer"></div>
+
+        <p class="s3-start-text" id="start-text">화면을 클릭하면 게임 시작!</p>
+
+        <div class="s3-character" id="paddle">
+          <img src="assets/brick-game/s3-character.png" alt="">
+        </div>
+        <div class="ball-trail" id="ball-trail"><img src="assets/brick-game/ball-trail.png" alt=""></div>
+        <img class="s3-ball" id="ball" src="assets/brick-game/s3-mallet-glow.png" alt="">
+
+        <div class="hp-float" id="hp-float">
+          <img id="hp-float-icon" src="assets/brick-game/item-gift.png" alt="">
+          <span class="amt" id="hp-float-text">HP +30</span>
+        </div>
+
+        <div class="s3-gameover" id="gameover">
+          <div class="gc-panel">
+            <div class="gc-title-row">
+              <div class="gc-title" style="color:#2ed1fb;">GAME OVER</div>
+              <img class="gc-trophy" src="assets/brick-game/crying-chicken.png" alt="" style="width:150px;height:142px;">
+            </div>
+            <div class="gc-stats">
+              <div class="gc-stat-box"><span>도달 스테이지</span><b id="go-stage">1</b></div>
+              <div class="gc-stat-box"><span>획득 아이템</span><b id="go-items">0</b></div>
+            </div>
+            <div class="dex-progress" style="width:100%;">
+              <p id="go-progress-text"></p>
+              <div class="dex-progress-slots" id="go-progress-slots"></div>
+            </div>
+            <div class="gc-footer">
+              <button class="dex-continue" id="go-dex-btn">
+                <img src="assets/brick-game/s3-item-book-icon.png" alt="" style="width:16px;height:16px;">
+                아이템 도감
+              </button>
+              <button class="gc-again-btn" id="go-retry-btn">
+                <img class="bg" src="assets/brick-game/btn-blue-banner-bg.png" alt="">
+                <img class="icon" src="assets/brick-game/icon-joystick.png" alt="">
+                <span>다시 도전하기</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="s3-gameover" id="gamecomplete" style="z-index:35;">
+          <div class="gc-panel">
+            <div class="gc-title-row">
+              <div class="gc-title">All CLEAR!</div>
+              <img class="gc-trophy" src="assets/brick-game/trophy-chicken.png" alt="">
+            </div>
+            <div class="gc-stats">
+              <div class="gc-stat-box"><span>도달 스테이지</span><b id="gc-stage">3</b></div>
+              <div class="gc-stat-box"><span>획득 아이템</span><b id="gc-items">0</b></div>
+            </div>
+            <div class="dex-progress" style="width:100%;">
+              <p id="gc-progress-text"></p>
+              <div class="dex-progress-slots" id="gc-progress-slots"></div>
+            </div>
+            <div class="gc-footer">
+              <button class="dex-continue" id="gc-dex-btn">
+                <img src="assets/brick-game/s3-item-book-icon.png" alt="" style="width:16px;height:16px;">
+                아이템 도감
+              </button>
+              <button class="gc-again-btn" id="gc-again-btn">
+                <img class="bg" src="assets/brick-game/btn-blue-banner-bg.png" alt="">
+                <img class="icon" src="assets/brick-game/icon-joystick.png" alt="">
+                <span>한 판 더하기</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage-announce" id="stage-announce">
+          <div class="sa-stage" id="sa-stage-text">STAGE 2</div>
+          <div class="sa-speed">
+            <img src="assets/brick-game/item-speedup.png" alt="">
+            <span>공 속도 +20%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="s3-hp">
+        <div class="row">
+          <div class="hp-label">
+            <img src="assets/brick-game/s3-heart-icon.png" alt="">
+            <span>HP</span>
+          </div>
+          <div class="hp-value">
+            <span class="cur" id="hp-cur">100</span><span class="slash">/</span><span class="max">100</span>
+          </div>
+        </div>
+        <div class="hp-bar"><img id="hp-bar-img" src="assets/brick-game/s3-hp-bar-bg.png" alt=""></div>
+      </div>
+
+      <div class="dex-overlay" id="dex-overlay">
+        <div class="dex-panel">
+          <div class="dex-header">
+            <div class="dex-title">
+              <img src="assets/brick-game/s3-item-book-icon.png" alt="">
+              <span>내 아이템 도감</span>
+            </div>
+            <div class="dex-close" id="dex-close">&#10005;</div>
+          </div>
+
+          <div class="dex-progress">
+            <p id="dex-progress-text"></p>
+            <div class="dex-progress-slots" id="dex-progress-slots"></div>
+          </div>
+
+          <div class="dex-count-row">
+            <span class="left">전체 아이템 <b id="dex-total-text"></b></span>
+            <span class="right">획득 <b class="hl" id="dex-collected-text">0</b>/<span id="dex-total-text2"></span></span>
+          </div>
+
+          <div class="dex-list-wrap">
+            <div class="dex-list" id="dex-list"></div>
+            <div class="dex-scrollbar"><div class="dex-scrollbar-thumb" id="dex-scrollbar-thumb"></div></div>
+          </div>
+
+          <div class="dex-footer">
+            <button class="dex-continue" id="dex-continue">▶ 계속하기</button>
+            <button class="dex-claim" id="dex-claim">
+              <img class="bg" src="assets/brick-game/btn-gold-badge-bg.png" alt="">
+              <img class="icon" src="assets/brick-game/item-gift.png" alt="">
+              <span>본인인증 후 경품 받기</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 본인인증 동의 -->
+    <div id="screen-claim-consent" class="screen claim-screen">
+      <div class="claim-topbar">
+        <div class="claim-back" id="claim-consent-back"><img src="assets/brick-game/icon-back-arrow.svg" alt=""></div>
+      </div>
+      <div class="claim-body">
+        <div class="claim-title">
+          <h2>본인인증을 하려면<br>동의가 필요해요</h2>
+          <p class="claim-sub">본인인증을 마치면 이벤트에 참여할 수 있어요.</p>
+        </div>
+        <div class="claim-illust"><img src="assets/brick-game/claim-idcard-illust.png" alt=""></div>
+        <div class="claim-terms">
+          <div class="claim-term open" data-term>
+            <div class="claim-term-row">
+              <div class="claim-term-label"><img src="assets/brick-game/icon-check-active.svg" alt=""><span>(필수) 약관내용 약관내용 약관내용</span></div>
+              <img class="chev" src="assets/brick-game/icon-chevron-up.svg" alt="">
+            </div>
+            <div class="claim-term-body">약관내용 약관내용 약관내용 약관내용 약관내용 약관내용 약관내용 약관내용 약관내용 약관내용 약관내용 약관내용 약관내용 약관내용 약관내용 약관내용 약관내용 약관내용</div>
+          </div>
+          <div class="claim-term" data-term>
+            <div class="claim-term-row">
+              <div class="claim-term-label"><img src="assets/brick-game/icon-check.svg" alt=""><span>(필수) 약관내용 약관내용 약관내용 약관 약관내용 약관내용</span></div>
+              <img class="chev" src="assets/brick-game/icon-chevron-down.svg" alt="">
+            </div>
+            <div class="claim-term-body">약관내용 약관내용 약관내용 약관내용 약관내용 약관내용 약관내용 약관내용 약관내용 약관내용</div>
+          </div>
+          <div class="claim-term" data-term>
+            <div class="claim-term-row">
+              <div class="claim-term-label"><img src="assets/brick-game/icon-check.svg" alt=""><span>(선택) 약관내용 약관내용 약관내용</span></div>
+              <img class="chev" src="assets/brick-game/icon-chevron-down.svg" alt="">
+            </div>
+            <div class="claim-term-body">약관내용 약관내용 약관내용 약관내용 약관내용 약관내용 약관내용 약관내용 약관내용 약관내용</div>
+          </div>
+        </div>
+      </div>
+      <div class="claim-bottom">
+        <div class="claim-gradient"></div>
+        <button class="claim-btn-primary" id="claim-consent-btn">동의하기</button>
+      </div>
+    </div>
+
+    <!-- 본인인증 완료 -->
+    <div id="screen-claim-verify" class="screen claim-screen">
+      <div class="claim-topbar">
+        <div class="claim-back" id="claim-verify-back"><img src="assets/brick-game/icon-back-arrow.svg" alt=""></div>
+      </div>
+      <div class="claim-body">
+        <div class="claim-title">
+          <h2>본인인증을 완료했어요.<br>이벤트 참여하기를 눌러<br>최종적으로 완료해주세요.</h2>
+        </div>
+        <div class="claim-table">
+          <div class="claim-table-row"><span class="k">이름</span><span class="v">덕혜이</span></div>
+          <div class="claim-table-row"><span class="k">전화번호</span><span class="v">010-0000-0000</span></div>
+          <div class="claim-table-row"><span class="k">생년월일</span><span class="v">1990.01.01</span></div>
+        </div>
+      </div>
+      <div class="claim-bottom">
+        <div class="claim-gradient"></div>
+        <div class="claim-bubble">
+          <div class="claim-bubble-box">'이벤트 참여하기'를 누르면 진짜 끝이에요!</div>
+          <div class="claim-bubble-tail"><img src="assets/brick-game/s2-bubble-tail.svg" alt=""></div>
+        </div>
+        <button class="claim-btn-primary" id="claim-verify-btn">이벤트 참여하기</button>
+      </div>
+    </div>
+
+    <!-- 경품 최초 응모 -->
+    <div id="screen-claim-done" class="screen claim-screen claim-result">
+      <div class="claim-body">
+        <div class="claim-result-title">
+          <h2>경품 응모가<br>완료되었습니다.</h2>
+          <p class="claim-result-sub">당첨된 경품 안내사항은<br>개별적으로 연락 드릴 예정입니다.</p>
+          <p class="claim-result-note">획득한 저축 상품 아이템과 복지 혜택 아이템 내용이<br>더 궁금하다면? 아래 버튼으로 확인해보세요!</p>
+        </div>
+        <div class="claim-duck"><img src="assets/brick-game/duck-complete-sign.png" alt=""></div>
+      </div>
+      <div class="claim-bottom">
+        <div class="claim-gradient"></div>
+        <button class="claim-btn-primary">장기저축급여 알아보기</button>
+        <button class="claim-btn-outline">공제회 회원 전용 혜택 모아보기</button>
+        <div class="claim-game-card" id="claim-done-backtogame">
+          <img class="claim-game-bg" src="assets/brick-game/claim-card-glow.png" alt="">
+          <div class="claim-game-logo">
+            <div class="l1"><img src="assets/brick-game/s3-logo-sprite-a.png" alt=""></div>
+            <div class="l2">
+              <div class="a"><img src="assets/brick-game/s3-logo-sprite-a.png" alt=""></div>
+              <div class="b"><img src="assets/brick-game/s3-logo-sprite-b.png" alt=""></div>
+            </div>
+          </div>
+          <div class="claim-game-btn">
+            <img src="assets/brick-game/btn-start-bg.png" alt="">
+            <span>게임으로 돌아가기</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 경품 중복 응모 -->
+    <div id="screen-claim-duplicate" class="screen claim-screen claim-result">
+      <div class="claim-body">
+        <div class="claim-result-title">
+          <h2>이미 경품 응모가<br>완료되었습니다.</h2>
+          <p class="claim-result-sub">당첨된 경품 안내사항은<br>개별적으로 연락 드릴 예정입니다.</p>
+          <p class="claim-result-note">획득한 저축 상품 아이템과 복지 혜택 아이템 내용이<br>더 궁금하다면? 아래 버튼으로 확인해보세요!</p>
+        </div>
+        <div class="claim-duck"><img src="assets/brick-game/duck-complete-sign.png" alt=""></div>
+      </div>
+      <div class="claim-bottom">
+        <div class="claim-gradient"></div>
+        <button class="claim-btn-primary">장기저축급여 알아보기</button>
+        <button class="claim-btn-outline">공제회 회원 전용 혜택 모아보기</button>
+        <div class="claim-game-card" id="claim-duplicate-backtogame">
+          <img class="claim-game-bg" src="assets/brick-game/claim-card-glow.png" alt="">
+          <div class="claim-game-logo">
+            <div class="l1"><img src="assets/brick-game/s3-logo-sprite-a.png" alt=""></div>
+            <div class="l2">
+              <div class="a"><img src="assets/brick-game/s3-logo-sprite-a.png" alt=""></div>
+              <div class="b"><img src="assets/brick-game/s3-logo-sprite-b.png" alt=""></div>
+            </div>
+          </div>
+          <div class="claim-game-btn">
+            <img src="assets/brick-game/btn-start-bg.png" alt="">
+            <span>게임으로 돌아가기</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <button class="reset-btn" id="reset-btn" hidden>처음으로 다시보기</button>
+
+  <script>
+    (function(){
+      var root = document.documentElement;
+      function fit(){
+        var vw = window.innerWidth, vh = window.innerHeight;
+        root.style.setProperty('--fit', Math.min(vw / 375, vh / 812));
+      }
+      fit();
+      window.addEventListener('resize', fit);
+      window.addEventListener('orientationchange', fit);
+    })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script>
+    const screen1 = document.getElementById('screen-1');
+    const screen2 = document.getElementById('screen-2');
+    const screen3 = document.getElementById('screen-3');
+    const claimConsentEl = document.getElementById('screen-claim-consent');
+    const claimVerifyEl = document.getElementById('screen-claim-verify');
+    const claimDoneEl = document.getElementById('screen-claim-done');
+    const claimDuplicateEl = document.getElementById('screen-claim-duplicate');
+    const btnStart = document.getElementById('btn-start');
+    const resetBtn = document.getElementById('reset-btn');
+    const board = document.getElementById('game-board');
+    const startText = document.getElementById('start-text');
+    const ballEl = document.getElementById('ball');
+    const ballTrailEl = document.getElementById('ball-trail');
+    const paddleEl = document.getElementById('paddle');
+    const bricksLayer = document.getElementById('bricks-layer');
+    const bricksCountEl = document.getElementById('bricks-count');
+    const hpCurEl = document.getElementById('hp-cur');
+    const hpBarImg = document.getElementById('hp-bar-img');
+    const gameoverEl = document.getElementById('gameover');
+    const goStageEl = document.getElementById('go-stage');
+    const goItemsEl = document.getElementById('go-items');
+    const goProgressText = document.getElementById('go-progress-text');
+    const goProgressSlots = document.getElementById('go-progress-slots');
+    const goDexBtn = document.getElementById('go-dex-btn');
+    const goRetryBtn = document.getElementById('go-retry-btn');
+    const gameCompleteEl = document.getElementById('gamecomplete');
+    const gcStageEl = document.getElementById('gc-stage');
+    const gcItemsEl = document.getElementById('gc-items');
+    const gcProgressText = document.getElementById('gc-progress-text');
+    const gcProgressSlots = document.getElementById('gc-progress-slots');
+    const gcDexBtn = document.getElementById('gc-dex-btn');
+    const gcAgainBtn = document.getElementById('gc-again-btn');
+    const stageValueEl = document.getElementById('stage-value');
+    const stageAnnounceEl = document.getElementById('stage-announce');
+    const saStageTextEl = document.getElementById('sa-stage-text');
+    const hpFloatEl = document.getElementById('hp-float');
+    const hpFloatIconEl = document.getElementById('hp-float-icon');
+    const hpFloatTextEl = document.getElementById('hp-float-text');
+    const giftBannerEl = document.getElementById('gift-banner');
+    const gbIconImg = document.getElementById('gb-icon-img');
+    const gbCatEl = document.getElementById('gb-cat');
+    const gbNameEl = document.getElementById('gb-name');
+    const gbDescEl = document.getElementById('gb-desc');
+    const gbRegisteredEl = document.getElementById('gb-registered');
+    const dexBtn = document.getElementById('dex-btn');
+    const dexBadge = document.getElementById('dex-badge');
+    const dexOverlay = document.getElementById('dex-overlay');
+    const dexClose = document.getElementById('dex-close');
+    const dexContinue = document.getElementById('dex-continue');
+    const dexClaim = document.getElementById('dex-claim');
+    const dexProgressText = document.getElementById('dex-progress-text');
+    const dexProgressSlots = document.getElementById('dex-progress-slots');
+    const dexTotalText = document.getElementById('dex-total-text');
+    const dexTotalText2 = document.getElementById('dex-total-text2');
+    const dexCollectedText = document.getElementById('dex-collected-text');
+    const dexList = document.getElementById('dex-list');
+    const dexScrollbarThumb = document.getElementById('dex-scrollbar-thumb');
+    const soundToggleBtn = document.getElementById('sound-toggle-btn');
+
+    class RetroAudioEngine {
+      constructor() {
+        this.ctx = null;
+        this.isMuted = false;
+        this.isBgmPlaying = false;
+        this.bgmTimer = null;
+        this.currentNoteIndex = 0;
+        this.volume = 0.25;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+      }
+
+      playTone(freq, type = 'square', duration = 0.08, gainVal = 0.1, pitchBend = 0) {
+        if (this.isMuted || !this.ctx) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+          if (pitchBend !== 0) {
+            osc.frequency.exponentialRampToValueAtTime(Math.max(10, freq + pitchBend), this.ctx.currentTime + duration);
+          }
+          gain.gain.setValueAtTime(gainVal * this.volume, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + duration);
+        } catch (e) {}
+      }
+
+      playPaddleHit() { this.init(); this.playTone(320, 'triangle', 0.06, 0.12, 50); }
+      playBrickHit() { this.init(); this.playTone(580, 'square', 0.05, 0.09, 100); }
+      playCatchItem() {
+        this.init();
+        [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+          setTimeout(() => this.playTone(f, 'triangle', 0.12, 0.15, 30), i * 50);
+        });
+      }
+      playBadItem() {
+        this.init();
+        this.playTone(300, 'sawtooth', 0.12, 0.15, -120);
+        setTimeout(() => this.playTone(220, 'sawtooth', 0.15, 0.15, -80), 90);
+      }
+      playLoseLife() {
+        this.init();
+        [350, 300, 240, 180].forEach((f, i) => {
+          setTimeout(() => this.playTone(f, 'sawtooth', 0.15, 0.14, -50), i * 90);
+        });
+      }
+      playVictory() {
+        this.init();
+        [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) => {
+          setTimeout(() => this.playTone(f, 'square', 0.2, 0.18), i * 80);
+        });
+      }
+
+      toggleBgm() {
+        if (this.isBgmPlaying) {
+          this.stopBgm();
+          return false;
+        } else {
+          this.startBgm();
+          return true;
+        }
+      }
+
+      startBgm() {
+        if (this.isBgmPlaying || this.isMuted) return;
+        this.init();
+        this.isBgmPlaying = true;
+        this.currentNoteIndex = 0;
+
+        const notes = [
+          523.25, 659.25, 783.99, 659.25, 587.33, 698.46, 880.00, 698.46,
+          659.25, 783.99, 1046.5, 783.99, 587.33, 493.88, 587.33, 659.25
+        ];
+
+        const playNext = () => {
+          if (!this.isBgmPlaying || this.isMuted) return;
+          const f = notes[this.currentNoteIndex];
+          this.playTone(f, 'square', 0.12, 0.04);
+          this.playTone(f / 2, 'triangle', 0.1, 0.03);
+          this.currentNoteIndex = (this.currentNoteIndex + 1) % notes.length;
+          this.bgmTimer = setTimeout(playNext, 160);
+        };
+        playNext();
+      }
+
+      stopBgm() {
+        this.isBgmPlaying = false;
+        if (this.bgmTimer) {
+          clearTimeout(this.bgmTimer);
+          this.bgmTimer = null;
+        }
+      }
+    }
+
+    const audio = new RetroAudioEngine();
+
+    function resetAll(){
+      gsap.set(screen2, { opacity: 0, pointerEvents: 'none' });
+      gsap.set(screen3, { opacity: 0, scale: 1, y: 0, pointerEvents: 'none' });
+      gsap.set(screen1, { opacity: 1, pointerEvents: 'auto' });
+      screen1.classList.add('is-active');
+      screen2.classList.remove('is-active');
+      screen3.classList.remove('is-active');
+      [claimConsentEl, claimVerifyEl, claimDoneEl, claimDuplicateEl].forEach(el => {
+        gsap.set(el, { opacity: 0, pointerEvents: 'none' });
+        el.classList.remove('is-active');
+      });
+      initGame();
+    }
+
+    soundToggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      audio.init();
+      audio.isMuted = !audio.isMuted;
+      soundToggleBtn.classList.toggle('muted', audio.isMuted);
+      if (audio.isMuted) audio.stopBgm();
+      else audio.startBgm();
+    });
+
+    // 1 -> 2 : 메인 화면 클릭
+    screen1.addEventListener('click', () => {
+      audio.init();
+      audio.startBgm();
+      screen2.classList.add('is-active');
+      gsap.timeline()
+        .to(screen1, { opacity: 0, duration: 0.3, ease: 'power2.out', onComplete: () => {
+          screen1.classList.remove('is-active');
+          screen1.style.pointerEvents = 'none';
+        }})
+        .fromTo(screen2, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out', pointerEvents: 'auto' }, '-=0.1');
+    });
+
+    // 2 -> 3 : 게임 시작하기 버튼 클릭 (레이어 팝업)
+    btnStart.addEventListener('click', (e) => {
+      e.stopPropagation();
+      screen3.classList.add('is-active');
+      gsap.fromTo(screen3,
+        { opacity: 0, scale: 0.9, y: 24 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: 'back.out(1.5)', pointerEvents: 'auto' }
+      );
+    });
+
+    resetBtn.addEventListener('click', resetAll);
+
+    /* ===================== 벽돌깨기 게임 엔진 ===================== */
+
+    const COLS = 6;
+    const BRICK_W = 48, BRICK_H = 13, GAP = 4;
+    const ROW_PITCH = BRICK_H + GAP; // 17
+    const GRID_LEFT = 20, GRID_TOP = 20;
+    const BOARD_W = 347, BOARD_H = 614;
+    const WALL_PAD = 6;
+    const PADDLE_W = 80, PADDLE_H = 70, PADDLE_Y = 544;
+    const BALL_SIZE = 24, BALL_HALF = 12;
+    const TRAIL_SIZE = 54, TRAIL_ORB_FX = 0.321, TRAIL_ORB_FY = 0.331, TRAIL_DEFAULT_ANGLE = -135;
+    const BRICK_COLOR_HEX = { row1: '#3ec8f0', row2: '#ffb020', row3: '#ffb020', row5: '#36d17a', row4: '#ef4b4b' };
+    const BASE_BALL_SPEED = 4.3;
+    const STAGE_SPEED_MULT = 1.2; // 스테이지마다 공 속도 +20%
+    const MAX_STAGE = 3; // 3스테이지 완료 시 All Clear 화면
+    const HP_MAX = 100;
+    const HP_GIFT_GAIN = 30;
+    const HP_BOMB_LOSS = 25;
+    const HP_MISS_LOSS = 30;
+    const ROWS_COUNT = 5;
+    const ROW_TYPES = ['row1', 'row2', 'row3', 'row5', 'row4']; // 위→아래: 시안, 주황, 초록, 주황, 빨강
+    const ITEM_SIZE = 50, ITEM_HALF = 25, ITEM_FALL_SPEED = 2.2;
+    const ITEM_DROP_CHANCE = 0.3; // 벽돌 파괴 시 아이템이 드랍될 확률 (나머지는 드랍 없음)
+
+    // HP 10칸 (칸당 5HP, 반칸 단위) 바 상태 - Figma 21단계 스프라이트 크롭 수치
+    const HP_BAR_STATES = {
+      100: { img: 'assets/brick-game/s3-hp-bar-bg.png', left: -2.99, top: -206.43, width: 105.98, height: 517.86 },
+      95:  { img: 'assets/brick-game/hp-bar-states.png', left: -28.52, top: -46.12,   width: 135.38, height: 2480.42 },
+      90:  { img: 'assets/brick-game/hp-bar-states.png', left: -28.52, top: -166.92,  width: 135.38, height: 2480.42 },
+      85:  { img: 'assets/brick-game/hp-bar-states.png', left: -28.52, top: -279.15,  width: 135.38, height: 2480.42 },
+      80:  { img: 'assets/brick-game/hp-bar-states.png', left: -28.52, top: -396,     width: 135.38, height: 2480.42 },
+      75:  { img: 'assets/brick-game/hp-bar-states.png', left: -28.52, top: -513.89,  width: 135.38, height: 2480.42 },
+      70:  { img: 'assets/brick-game/hp-bar-states.png', left: -28.52, top: -630.98,  width: 135.38, height: 2480.42 },
+      65:  { img: 'assets/brick-game/hp-bar-states.png', left: -28.52, top: -746.5,   width: 135.38, height: 2480.42 },
+      60:  { img: 'assets/brick-game/hp-bar-states.png', left: -28.52, top: -863.42,  width: 135.38, height: 2480.42 },
+      55:  { img: 'assets/brick-game/hp-bar-states.png', left: -28.52, top: -981.41,  width: 135.38, height: 2480.42 },
+      50:  { img: 'assets/brick-game/hp-bar-states.png', left: -28.52, top: -1099.19, width: 135.38, height: 2480.42 },
+      45:  { img: 'assets/brick-game/hp-bar-states.png', left: -28.52, top: -1215.43, width: 135.38, height: 2480.42 },
+      40:  { img: 'assets/brick-game/hp-bar-states.png', left: -28.52, top: -1331.2,  width: 135.38, height: 2480.42 },
+      35:  { img: 'assets/brick-game/hp-bar-states.png', left: -28.52, top: -1449.08, width: 135.38, height: 2480.42 },
+      30:  { img: 'assets/brick-game/hp-bar-states.png', left: -28.52, top: -1567.68, width: 135.38, height: 2480.42 },
+      25:  { img: 'assets/brick-game/hp-bar-states.png', left: -28.52, top: -1684.3,  width: 135.38, height: 2480.42 },
+      20:  { img: 'assets/brick-game/hp-bar-states.png', left: -28.52, top: -1802.86, width: 135.38, height: 2480.42 },
+      15:  { img: 'assets/brick-game/hp-bar-states.png', left: -28.52, top: -1921.2,  width: 135.38, height: 2480.42 },
+      10:  { img: 'assets/brick-game/hp-bar-states.png', left: -28.52, top: -2039.6,  width: 135.38, height: 2480.42 },
+      5:   { img: 'assets/brick-game/hp-bar-states.png', left: -28.52, top: -2157.86, width: 135.38, height: 2480.42 },
+      0:   { img: 'assets/brick-game/hp-bar-states.png', left: -28.52, top: -2281.28, width: 135.38, height: 2480.42 },
+    };
+
+    // 선물 종류 카탈로그 (Figma 아이템 리스트)
+    const GIFT_ITEMS = [
+      { icon: 'gift-item-01.png', cat: '저축상품', name: '장기저축급여', desc: '급여율 5.0%, 연복리로 목돈 불리기' },
+      { icon: 'gift-item-02.png', cat: '저축상품', name: '분할급여금', desc: '모은 만큼 퇴직 후 월급처럼 받기' },
+      { icon: 'gift-item-03.png', cat: '저축상품', name: '증좌', desc: '여윳돈 생길 때마다 증좌로 미래 채우기' },
+      { icon: 'gift-item-04.png', cat: '문화 혜택', name: '영화표 할인', desc: '보고 싶은 영화 365일 할인받고 보기' },
+      { icon: 'gift-item-05.png', cat: '문화 혜택', name: '숙박 및 교통 할인', desc: '숙박·교통 할인으로 여행 경비 줄이기' },
+      { icon: 'gift-item-06.png', cat: '문화 혜택', name: '골프장 회원가 이용', desc: '골프장 회원가로 취미 생활 즐기기' },
+      { icon: 'gift-item-07.png', cat: '문화 혜택', name: '결혼축하금', desc: '새 출발 축하금 받기' },
+      { icon: 'gift-item-08.png', cat: '문화 혜택', name: 'The-K 마음쉼', desc: '마음이 복잡할 때 1:1 상담 받기' },
+      { icon: 'gift-item-09.png', cat: '문화 혜택', name: '건강검진', desc: '제휴 검진기관에서 할인받고 건강 챙기기' },
+    ];
+
+    let rows = [];           // { slot, color, bricks:[bool x6], el }
+    let paddleX = (BOARD_W - PADDLE_W) / 2;
+    let dragging = false;
+    let hp = HP_MAX;
+    let totalBroken = 0;
+    let giftsCollected = 0;
+    let collectedTypes = new Set(); // GIFT_ITEMS 인덱스 중 1회 이상 획득한 것
+    let dexOpen = false;
+    let fallingItems = [];   // { type:'gift'|'bomb', x, y, el }
+    let gameOver = false;
+    let gameComplete = false;
+    let stage = 1;
+    let ballSpeed = BASE_BALL_SPEED;
+
+    const ball = { x: 0, y: 0, vx: 0, vy: 0, state: 'idle' }; // idle | launched
+
+    function createRow(slot, color){
+      const row = { slot, color, bricks: Array(COLS).fill(true), el: null };
+      const rowEl = document.createElement('div');
+      rowEl.className = 'row ' + color;
+      for (let c = 0; c < COLS; c++){
+        const brick = document.createElement('div');
+        brick.className = 'brick';
+        const img = document.createElement('img');
+        img.src = 'assets/brick-game/s3-brick-tile.png';
+        img.alt = '';
+        brick.appendChild(img);
+        rowEl.appendChild(brick);
+      }
+      row.el = rowEl;
+      positionRow(row);
+      return row;
+    }
+
+    function positionRow(row){
+      row.el.style.top = (GRID_TOP + row.slot * ROW_PITCH) + 'px';
+    }
+
+    function buildInitialBricks(){
+      bricksLayer.innerHTML = '';
+      rows = [];
+      for (let slot = 0; slot < ROWS_COUNT; slot++){
+        const row = createRow(slot, ROW_TYPES[slot]);
+        bricksLayer.appendChild(row.el);
+        rows.push(row);
+      }
+      updateLiveBrickCount();
+    }
+
+    function updateLiveBrickCount(){
+      let count = 0;
+      rows.forEach(r => { r.bricks.forEach(alive => { if (alive) count++; }); });
+      bricksCountEl.textContent = count;
+    }
+
+    function destroyBrick(row, col){
+      if (!row.bricks[col]) return;
+      row.bricks[col] = false;
+      totalBroken++;
+      const brickEl = row.el.children[col];
+      brickEl.classList.add('dead');
+      updateLiveBrickCount();
+      audio.playBrickHit();
+
+      const brickX = GRID_LEFT + col * (BRICK_W + GAP);
+      const brickY = GRID_TOP + row.slot * ROW_PITCH;
+      spawnBrickBurst(brickX + BRICK_W / 2, brickY + BRICK_H / 2, row.color);
+      spawnFallingItem(brickX + BRICK_W / 2, brickY + BRICK_H / 2);
+
+      const allCleared = rows.every(r => r.bricks.every(alive => !alive));
+      if (allCleared){
+        if (stage >= MAX_STAGE){
+          triggerGameComplete();
+        } else {
+          advanceStage();
+        }
+      }
+    }
+
+    function renderGiftProgressCard(textEl, slotsEl, doneSuffix){
+      const need = 3;
+      const done = giftsCollected >= need;
+      slotsEl.innerHTML = '';
+      for (let i = 0; i < need; i++){
+        const img = document.createElement('img');
+        img.src = 'assets/brick-game/item-gift.png';
+        if (i >= Math.min(giftsCollected, need)) img.className = 'empty';
+        slotsEl.appendChild(img);
+      }
+      if (done){
+        textEl.innerHTML = '<span class="hl">아이템 ' + giftsCollected + '개</span> 수집 완료!<br>' + doneSuffix;
+      } else {
+        const remain = need - giftsCollected;
+        textEl.innerHTML = '<span class="hl">아이템 3개</span>를 모으면 본인인증 후 <span class="hl">경품 응모!</span><br>앞으로 <span class="hl">' + remain + '개</span> 남았어요.';
+      }
+    }
+
+    function updateGameCompleteProgress(){
+      renderGiftProgressCard(gcProgressText, gcProgressSlots, '하단의 아이템 도감 버튼을 눌러 본인인증 후 <span class="hl">경품</span> 응모가 가능해요.');
+    }
+
+    function triggerGameComplete(){
+      gameComplete = true;
+      ball.state = 'idle';
+      gcStageEl.textContent = stage;
+      gcItemsEl.textContent = giftsCollected;
+      updateGameCompleteProgress();
+      gsap.to(startText, { opacity: 0, duration: 0.15 });
+      audio.playVictory();
+      gameCompleteEl.classList.add('show');
+    }
+
+    function hideGameComplete(){
+      gameComplete = false;
+      gameCompleteEl.classList.remove('show');
+    }
+
+    function spawnBrickBurst(cx, cy, colorType){
+      const color = BRICK_COLOR_HEX[colorType] || '#ffffff';
+      const count = 7;
+      for (let i = 0; i < count; i++){
+        const p = document.createElement('div');
+        p.className = 'brick-particle';
+        p.style.left = (cx - 3) + 'px';
+        p.style.top = (cy - 3) + 'px';
+        p.style.background = color;
+        board.appendChild(p);
+        const angle = (Math.PI * 2 * i) / count + Math.random() * 0.6;
+        const dist = 18 + Math.random() * 16;
+        gsap.timeline({ onComplete: () => p.remove() })
+          .to(p, {
+            x: Math.cos(angle) * dist,
+            y: Math.sin(angle) * dist,
+            rotation: Math.random() * 180 - 90,
+            duration: 0.4,
+            ease: 'power2.out'
+          }, 0)
+          .to(p, { opacity: 0, duration: 0.2 }, 0.2);
+      }
+    }
+
+    function spawnFallingItem(cx, cy){
+      if (Math.random() >= ITEM_DROP_CHANCE) return; // 대부분은 아무것도 드랍되지 않음
+      const type = Math.random() < 0.5 ? 'gift' : 'bomb';
+      const el = document.createElement('img');
+      el.src = type === 'gift' ? 'assets/brick-game/item-gift.png' : 'assets/brick-game/item-bomb.png';
+      el.alt = '';
+      el.className = 'falling-item';
+      const x = cx - ITEM_HALF;
+      const y = cy - ITEM_HALF;
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      board.appendChild(el);
+      fallingItems.push({ type, x, y, el });
+    }
+
+    function collectItem(item){
+      item.el.remove();
+      if (item.type === 'gift'){
+        audio.playCatchItem();
+        giftsCollected++;
+        hp = Math.min(HP_MAX, hp + HP_GIFT_GAIN);
+        updateHpUI();
+        showHpFloat('gain', HP_GIFT_GAIN, 'assets/brick-game/item-gift.png');
+        const giftIdx = Math.floor(Math.random() * GIFT_ITEMS.length);
+        registerDexItem(giftIdx);
+        showGiftBanner(giftIdx);
+      } else {
+        audio.playBadItem();
+        hp = Math.max(0, hp - HP_BOMB_LOSS);
+        updateHpUI();
+        showHpFloat('loss', HP_BOMB_LOSS, 'assets/brick-game/item-bomb.png');
+        if (hp <= 0) triggerGameOver();
+      }
+    }
+
+    let hpFloatTween = null;
+    function showHpFloat(kind, amount, iconSrc){
+      hpFloatIconEl.src = iconSrc;
+      hpFloatTextEl.textContent = 'HP ' + (kind === 'gain' ? '+' : '-') + amount;
+      hpFloatEl.classList.remove('gain', 'loss');
+      hpFloatEl.classList.add(kind);
+      if (hpFloatTween) hpFloatTween.kill();
+      gsap.killTweensOf(hpFloatEl);
+      gsap.set(hpFloatEl, { opacity: 0, scale: 0.7, y: -10 });
+      hpFloatTween = gsap.timeline()
+        .to(hpFloatEl, { opacity: 1, scale: 1, y: 0, duration: 0.2, ease: 'back.out(2)' })
+        .to(hpFloatEl, { opacity: 0, y: -16, duration: 0.3, ease: 'power1.in', delay: 0.7 });
+    }
+
+    let giftBannerTimer = null;
+    function showGiftBanner(itemIdx){
+      const item = GIFT_ITEMS[itemIdx];
+      gbIconImg.src = 'assets/brick-game/' + item.icon;
+      gbCatEl.textContent = item.cat;
+      gbNameEl.textContent = item.name;
+      gbDescEl.textContent = item.desc;
+      gbRegisteredEl.textContent = `아이템 도감 '${item.name}' 등록 완료!`;
+
+      giftBannerEl.classList.add('show');
+      if (giftBannerTimer) clearTimeout(giftBannerTimer);
+      giftBannerTimer = setTimeout(() => {
+        giftBannerEl.classList.remove('show');
+      }, 2600);
+    }
+
+    function hideGiftBanner(){
+      giftBannerEl.classList.remove('show');
+      if (giftBannerTimer) { clearTimeout(giftBannerTimer); giftBannerTimer = null; }
+    }
+
+    function registerDexItem(idx){
+      collectedTypes.add(idx);
+      dexBadge.classList.add('show');
+    }
+
+    function updateDexProgress(){
+      renderGiftProgressCard(dexProgressText, dexProgressSlots, '본인인증 후 <span class="hl">경품</span> 응모가 가능해요.');
+      dexClaim.classList.toggle('active', giftsCollected >= 3);
+    }
+
+    function renderDexList(){
+      dexList.innerHTML = '';
+      dexTotalText.textContent = GIFT_ITEMS.length + '종';
+      dexTotalText2.textContent = GIFT_ITEMS.length;
+      dexCollectedText.textContent = collectedTypes.size;
+
+      GIFT_ITEMS.forEach((item, idx) => {
+        const unlocked = collectedTypes.has(idx);
+        const row = document.createElement('div');
+        row.className = 'dex-row ' + (unlocked ? 'unlocked' : 'locked');
+
+        const iconWrap = document.createElement('div');
+        iconWrap.className = 'dex-icon';
+        const iconImg = document.createElement('img');
+        iconImg.src = 'assets/brick-game/' + item.icon;
+        iconWrap.appendChild(iconImg);
+
+        const info = document.createElement('div');
+        info.className = 'dex-info';
+
+        const tag = document.createElement('div');
+        tag.className = 'dex-tag';
+        if (unlocked){
+          tag.textContent = item.cat;
+        } else {
+          const tagIcon = document.createElement('img');
+          tagIcon.src = 'assets/brick-game/icon-gift-mini.png';
+          const tagText = document.createElement('span');
+          tagText.textContent = '미획득';
+          tag.appendChild(tagIcon);
+          tag.appendChild(tagText);
+        }
+
+        const name = document.createElement('div');
+        name.className = 'dex-name';
+        name.textContent = item.name;
+
+        const desc = document.createElement('div');
+        desc.className = 'dex-desc';
+        desc.textContent = item.desc;
+
+        info.appendChild(tag);
+        info.appendChild(name);
+        info.appendChild(desc);
+        row.appendChild(iconWrap);
+        row.appendChild(info);
+        dexList.appendChild(row);
+
+        if (idx < GIFT_ITEMS.length - 1){
+          dexList.appendChild(Object.assign(document.createElement('div'), { className: 'dex-divider' }));
+        }
+      });
+    }
+
+    function updateDexScrollbar(){
+      const ratio = dexList.clientHeight / dexList.scrollHeight;
+      const trackHeight = dexList.clientHeight - 16;
+      const thumbHeight = Math.max(24, trackHeight * ratio);
+      const maxScroll = dexList.scrollHeight - dexList.clientHeight;
+      const scrollRatio = maxScroll > 0 ? dexList.scrollTop / maxScroll : 0;
+      dexScrollbarThumb.style.height = thumbHeight + 'px';
+      dexScrollbarThumb.style.top = (scrollRatio * (trackHeight - thumbHeight)) + 'px';
+    }
+
+    function openDex(){
+      dexOpen = true;
+      dexBadge.classList.remove('show');
+      updateDexProgress();
+      renderDexList();
+      dexOverlay.classList.add('show');
+      dexList.scrollTop = 0;
+      requestAnimationFrame(updateDexScrollbar);
+    }
+
+    function closeDex(){
+      dexOpen = false;
+      dexOverlay.classList.remove('show');
+    }
+
+    dexBtn.addEventListener('click', (e) => { e.stopPropagation(); openDex(); });
+    gcDexBtn.addEventListener('click', (e) => { e.stopPropagation(); openDex(); });
+    gcAgainBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hideGameComplete();
+      restartGame(stage);
+    });
+    goDexBtn.addEventListener('click', (e) => { e.stopPropagation(); openDex(); });
+    goRetryBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      restartGame(stage);
+    });
+    dexClose.addEventListener('click', (e) => { e.stopPropagation(); closeDex(); });
+    dexContinue.addEventListener('click', (e) => { e.stopPropagation(); closeDex(); });
+    dexClaim.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!dexClaim.classList.contains('active')) return;
+      closeDex();
+      switchScreen(screen3, claimConsentEl);
+    });
+    dexList.addEventListener('scroll', updateDexScrollbar);
+
+    /* ---------- 경품 응모 플로우 (본인인증 → 참여 → 완료) ---------- */
+
+    const PRIZE_CLAIMED_KEY = 'tk_brickgame_prize_claimed';
+
+    function switchScreen(fromEl, toEl){
+      gsap.killTweensOf([fromEl, toEl]);
+      fromEl.classList.remove('is-active');
+      gsap.set(fromEl, { opacity: 0, pointerEvents: 'none' });
+      toEl.classList.add('is-active');
+      gsap.set(toEl, { opacity: 1, pointerEvents: 'auto' });
+    }
+
+    document.getElementById('claim-consent-back').addEventListener('click', () => switchScreen(claimConsentEl, screen3));
+    document.getElementById('claim-consent-btn').addEventListener('click', () => switchScreen(claimConsentEl, claimVerifyEl));
+    document.getElementById('claim-verify-back').addEventListener('click', () => switchScreen(claimVerifyEl, claimConsentEl));
+    document.getElementById('claim-verify-btn').addEventListener('click', () => {
+      const alreadyClaimed = localStorage.getItem(PRIZE_CLAIMED_KEY) === '1';
+      if (alreadyClaimed){
+        switchScreen(claimVerifyEl, claimDuplicateEl);
+      } else {
+        localStorage.setItem(PRIZE_CLAIMED_KEY, '1');
+        switchScreen(claimVerifyEl, claimDoneEl);
+      }
+    });
+    document.getElementById('claim-done-backtogame').addEventListener('click', () => resetAll());
+    document.getElementById('claim-duplicate-backtogame').addEventListener('click', () => resetAll());
+
+    document.querySelectorAll('.claim-term').forEach(term => {
+      term.querySelector('.claim-term-row').addEventListener('click', () => {
+        term.classList.toggle('open');
+      });
+    });
+
+    function updateHpBarVisual(){
+      const clamped = Math.max(0, Math.min(HP_MAX, Math.round(hp / 5) * 5));
+      const state = HP_BAR_STATES[clamped];
+      hpBarImg.src = state.img;
+      hpBarImg.style.left = state.left + '%';
+      hpBarImg.style.top = state.top + '%';
+      hpBarImg.style.width = state.width + '%';
+      hpBarImg.style.height = state.height + '%';
+    }
+
+    function clearFallingItems(){
+      fallingItems.forEach(item => item.el.remove());
+      fallingItems = [];
+    }
+
+    function spawnPaddleHitFx(cx, cy){
+      paddleEl.classList.remove('hit');
+      void paddleEl.offsetWidth;
+      paddleEl.classList.add('hit');
+      gsap.delayedCall(0.15, () => paddleEl.classList.remove('hit'));
+
+      const ring = document.createElement('div');
+      ring.className = 'hit-ring';
+      ring.style.left = cx + 'px';
+      ring.style.top = cy + 'px';
+      board.appendChild(ring);
+      gsap.fromTo(ring,
+        { scale: 0.3, opacity: 1 },
+        { scale: 1.6, opacity: 0, duration: 0.35, ease: 'power2.out', onComplete: () => ring.remove() }
+      );
+    }
+
+    function layoutPaddle(){
+      paddleEl.style.left = paddleX + 'px';
+      paddleEl.style.top = PADDLE_Y + 'px';
+    }
+
+    function layoutBall(){
+      if (ball.state === 'launched'){
+        ballEl.style.opacity = '0';
+        const cx = ball.x + BALL_HALF;
+        const cy = ball.y + BALL_HALF;
+        const angle = Math.atan2(ball.vy, ball.vx) * 180 / Math.PI - TRAIL_DEFAULT_ANGLE;
+        ballTrailEl.style.left = (cx - TRAIL_SIZE * TRAIL_ORB_FX) + 'px';
+        ballTrailEl.style.top = (cy - TRAIL_SIZE * TRAIL_ORB_FY) + 'px';
+        gsap.set(ballTrailEl, { rotation: angle });
+      } else {
+        ballEl.style.opacity = '1';
+        ballEl.style.left = ball.x + 'px';
+        ballEl.style.top = ball.y + 'px';
+      }
+    }
+
+    let trailGhostCounter = 0;
+    function spawnTrailGhost(cx, cy){
+      const ghost = document.createElement('div');
+      ghost.className = 'trail-ghost';
+      ghost.style.left = cx + 'px';
+      ghost.style.top = cy + 'px';
+      board.appendChild(ghost);
+      gsap.fromTo(ghost,
+        { opacity: 0.55, scale: 1 },
+        { opacity: 0, scale: 0.2, duration: 0.45, ease: 'power1.out', onComplete: () => ghost.remove() }
+      );
+    }
+
+    function setPaddleX(x){
+      paddleX = Math.max(0, Math.min(BOARD_W - PADDLE_W, x));
+      layoutPaddle();
+      if (ball.state === 'idle'){
+        ball.x = paddleX + PADDLE_W / 2 - BALL_HALF;
+        layoutBall();
+      }
+    }
+
+    function resetBallToIdle(){
+      ball.state = 'idle';
+      ball.vx = 0;
+      ball.vy = 0;
+      ball.x = paddleX + PADDLE_W / 2 - BALL_HALF;
+      ball.y = PADDLE_Y - BALL_HALF - 4;
+      gsap.killTweensOf(ballTrailEl);
+      gsap.set(ballTrailEl, { opacity: 0, scale: 1 });
+      layoutBall();
+    }
+
+    function launchBall(){
+      if (ball.state !== 'idle' || gameOver || gameComplete) return;
+      ball.state = 'launched';
+      ball.vx = 0;
+      ball.vy = -ballSpeed;
+      trailGhostCounter = 0;
+      gsap.to(startText, { opacity: 0, duration: 0.2, ease: 'power1.out' });
+      gsap.killTweensOf(ballTrailEl);
+      gsap.fromTo(ballTrailEl,
+        { opacity: 0, scale: 0.5 },
+        { opacity: 1, scale: 1, duration: 0.3, ease: 'power2.out' }
+      );
+    }
+
+    function updateHpUI(){
+      hpCurEl.textContent = Math.max(0, hp);
+      updateHpBarVisual();
+    }
+
+    function onBallMissed(){
+      hp = Math.max(0, hp - HP_MISS_LOSS);
+      updateHpUI();
+      showHpFloat('loss', HP_MISS_LOSS, 'assets/brick-game/item-miss.png');
+      if (hp <= 0){
+        triggerGameOver();
+      } else {
+        audio.playLoseLife();
+        resetBallToIdle();
+      }
+    }
+
+    function triggerGameOver(){
+      gameOver = true;
+      ball.state = 'idle';
+      goStageEl.textContent = stage;
+      goItemsEl.textContent = giftsCollected;
+      renderGiftProgressCard(goProgressText, goProgressSlots, '하단의 아이템 도감 버튼을 눌러 본인인증 후 <span class="hl">경품</span> 응모가 가능해요.');
+      gsap.to(startText, { opacity: 0, duration: 0.15 });
+      audio.playLoseLife();
+      gameoverEl.classList.add('show');
+    }
+
+    function advanceStage(){
+      stage++;
+      ballSpeed = BASE_BALL_SPEED * Math.pow(STAGE_SPEED_MULT, stage - 1);
+      stageValueEl.textContent = stage;
+      buildInitialBricks();
+      resetBallToIdle();
+      showStageAnnounce();
+    }
+
+    let stageAnnounceTimer = null;
+    function showStageAnnounce(){
+      saStageTextEl.textContent = 'STAGE ' + stage;
+      if (stageAnnounceTimer) clearTimeout(stageAnnounceTimer);
+      gsap.killTweensOf(stageAnnounceEl);
+      gsap.fromTo(stageAnnounceEl,
+        { opacity: 0, scale: 0.8 },
+        { opacity: 1, scale: 1, duration: 0.25, ease: 'back.out(2)' }
+      );
+      stageAnnounceTimer = setTimeout(() => {
+        gsap.to(stageAnnounceEl, { opacity: 0, duration: 0.3 });
+      }, 1800);
+    }
+
+    function hideStageAnnounce(){
+      if (stageAnnounceTimer) { clearTimeout(stageAnnounceTimer); stageAnnounceTimer = null; }
+      gsap.killTweensOf(stageAnnounceEl);
+      gsap.set(stageAnnounceEl, { opacity: 0 });
+    }
+
+    function restartGame(targetStage){
+      gameoverEl.classList.remove('show');
+      hideGameComplete();
+      hideGiftBanner();
+      hideStageAnnounce();
+      closeDex();
+      collectedTypes.clear();
+      dexBadge.classList.remove('show');
+      gsap.set(hpFloatEl, { opacity: 0 });
+      gameOver = false;
+      stage = Math.min(MAX_STAGE, Math.max(1, targetStage || 1));
+      ballSpeed = BASE_BALL_SPEED * Math.pow(STAGE_SPEED_MULT, stage - 1);
+      stageValueEl.textContent = stage;
+      hp = HP_MAX;
+      totalBroken = 0;
+      giftsCollected = 0;
+      clearFallingItems();
+      updateHpUI();
+      buildInitialBricks();
+      setPaddleX((BOARD_W - PADDLE_W) / 2);
+      resetBallToIdle();
+      gsap.set(startText, { opacity: 1 });
+      if (stage > 1) showStageAnnounce();
+    }
+
+    function initGame(){
+      hideGameComplete();
+      hideGiftBanner();
+      hideStageAnnounce();
+      closeDex();
+      collectedTypes.clear();
+      dexBadge.classList.remove('show');
+      gsap.set(hpFloatEl, { opacity: 0 });
+      gameOver = false;
+      stage = 1;
+      ballSpeed = BASE_BALL_SPEED;
+      stageValueEl.textContent = stage;
+      hp = HP_MAX;
+      totalBroken = 0;
+      giftsCollected = 0;
+      clearFallingItems();
+      updateHpUI();
+      gameoverEl.classList.remove('show');
+      buildInitialBricks();
+      setPaddleX((BOARD_W - PADDLE_W) / 2);
+      resetBallToIdle();
+      gsap.set(startText, { opacity: 1 });
+    }
+
+    /* ---------- 입력 처리 : 패들 드래그 + 공 발사 ---------- */
+
+    function clientXToBoardX(clientX){
+      const rect = board.getBoundingClientRect();
+      const scale = BOARD_W / rect.width;
+      return (clientX - rect.left) * scale;
+    }
+
+    board.addEventListener('pointerdown', (e) => {
+      if (gameOver || gameComplete) return;
+      dragging = true;
+      board.setPointerCapture(e.pointerId);
+      const bx = clientXToBoardX(e.clientX);
+      setPaddleX(bx - PADDLE_W / 2);
+      launchBall();
+    });
+
+    board.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const bx = clientXToBoardX(e.clientX);
+      setPaddleX(bx - PADDLE_W / 2);
+    });
+
+    board.addEventListener('pointerup', (e) => {
+      dragging = false;
+      try { board.releasePointerCapture(e.pointerId); } catch(err){}
+    });
+    board.addEventListener('pointercancel', () => { dragging = false; });
+
+    // 데스크탑 : 클릭하지 않아도 마우스를 따라 패들 이동
+    board.addEventListener('mousemove', (e) => {
+      if (gameOver || gameComplete) return;
+      const bx = clientXToBoardX(e.clientX);
+      setPaddleX(bx - PADDLE_W / 2);
+    });
+
+    /* ---------- 물리 루프 ---------- */
+
+    function rectsOverlap(ax, ay, aw, ah, bx, by, bw, bh){
+      return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+    }
+
+    function tick(){
+      if (ball.state === 'launched' && !gameOver && !dexOpen && !gameComplete){
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+
+        // 좌우 벽
+        if (ball.x <= WALL_PAD){ ball.x = WALL_PAD; ball.vx = Math.abs(ball.vx); audio.playPaddleHit(); }
+        if (ball.x + BALL_SIZE >= BOARD_W - WALL_PAD){ ball.x = BOARD_W - WALL_PAD - BALL_SIZE; ball.vx = -Math.abs(ball.vx); audio.playPaddleHit(); }
+        // 상단 벽
+        if (ball.y <= WALL_PAD){ ball.y = WALL_PAD; ball.vy = Math.abs(ball.vy); audio.playPaddleHit(); }
+
+        // 패들 충돌 (아래로 내려올 때만)
+        if (ball.vy > 0){
+          const ballBottom = ball.y + BALL_SIZE;
+          if (ballBottom >= PADDLE_Y && ball.y <= PADDLE_Y + 24 &&
+              ball.x + BALL_SIZE >= paddleX && ball.x <= paddleX + PADDLE_W){
+            const ballCenterX = ball.x + BALL_HALF;
+            let rel = (ballCenterX - (paddleX + PADDLE_W / 2)) / (PADDLE_W / 2);
+            rel = Math.max(-1, Math.min(1, rel));
+            ball.vx = rel * ballSpeed * 0.95;
+            const vy2 = ballSpeed * ballSpeed - ball.vx * ball.vx;
+            ball.vy = -Math.sqrt(Math.max(0.6, vy2));
+            ball.y = PADDLE_Y - BALL_SIZE;
+            spawnPaddleHitFx(ballCenterX, PADDLE_Y);
+            audio.playPaddleHit();
+          }
+        }
+
+        // 벽돌 충돌
+        outer:
+        for (const row of rows){
+          const by = GRID_TOP + row.slot * ROW_PITCH;
+          if (ball.y > by + BRICK_H + 6 || ball.y + BALL_SIZE < by - 6) continue;
+          for (let c = 0; c < COLS; c++){
+            if (!row.bricks[c]) continue;
+            const bx = GRID_LEFT + c * (BRICK_W + GAP);
+            if (rectsOverlap(ball.x, ball.y, BALL_SIZE, BALL_SIZE, bx, by, BRICK_W, BRICK_H)){
+              // 침투 깊이 비교로 반사축 결정
+              const overlapX = Math.min(ball.x + BALL_SIZE - bx, bx + BRICK_W - ball.x);
+              const overlapY = Math.min(ball.y + BALL_SIZE - by, by + BRICK_H - ball.y);
+              if (overlapX < overlapY){ ball.vx = -ball.vx; }
+              else { ball.vy = -ball.vy; }
+              destroyBrick(row, c);
+              break outer;
+            }
+          }
+        }
+
+        // 바닥 아래로 이탈 = 놓침
+        if (ball.y > BOARD_H){
+          onBallMissed();
+        }
+
+        layoutBall();
+
+        trailGhostCounter++;
+        if (trailGhostCounter % 2 === 0){
+          spawnTrailGhost(ball.x + BALL_HALF, ball.y + BALL_HALF);
+        }
+      }
+
+      // 낙하 아이템 (선물 / 폭탄) 물리
+      if (!gameOver && !dexOpen && !gameComplete && fallingItems.length){
+        for (let i = fallingItems.length - 1; i >= 0; i--){
+          const item = fallingItems[i];
+          item.y += ITEM_FALL_SPEED;
+
+          if (item.y + ITEM_SIZE >= PADDLE_Y && item.y <= PADDLE_Y + PADDLE_H &&
+              item.x + ITEM_SIZE >= paddleX && item.x <= paddleX + PADDLE_W){
+            collectItem(item);
+            fallingItems.splice(i, 1);
+            continue;
+          }
+          if (item.y > BOARD_H){
+            item.el.remove();
+            fallingItems.splice(i, 1);
+            continue;
+          }
+          item.el.style.top = item.y + 'px';
+        }
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    requestAnimationFrame(tick);
+    resetAll();
+  </script>
+</body>
+</html>
